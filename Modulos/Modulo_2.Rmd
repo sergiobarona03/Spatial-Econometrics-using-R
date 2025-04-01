@@ -1,0 +1,532 @@
+---
+title: 'Introducción al Análisis Exploratorio de Datos (EDA) en R'
+subtitle: 'Módulo 1'
+fontsize: 8 pt
+output:
+  beamer_presentation:
+    theme: "Berlin"
+    fonttheme: "structurebold"
+    slide_level: 2
+    toc: true
+date: "2024-03-16"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+def.chunk.hook  <- knitr::knit_hooks$get("chunk")
+knitr::knit_hooks$set(chunk = function(x, options) {
+  x <- def.chunk.hook(x, options)
+  paste0("\n \\", "tiny","\n\n", x, "\n\n \\normalsize")
+})
+```
+
+
+# R y RStudio
+
+## El entorno R
+
+R es un entorno de programación para el análisis de datos y gráficos (R Core Team, 2000). Algunas características de R son las siguientes:
+
+-   Permite el almacenamiento y la manipulación de datos.
+-   Incluye una amplia colección integrada de herramientas para el análisis de datos.
+-   Dispone de un lenuaje de programación interpretado, simple y efectivo que incluye condicionales, ciclos, funciones recursivas, etc. (Muchas de las funciones suministradas en el Sistema están escritas en lenguaje R).
+-   La funcionalidad de R consiste en paquetes modulares.
+
+## ¿Por qué R?
+
+R tiene las siguientes ventajas:
+
+-   R es un software libre
+-   R es multiplataforma
+-   R tiene una **sofisticada capacidad para hacer gráficos**, incluyendo paquetes gráficos especializados.
+-   R tiene librerías que cubre un amplio rango de la metodologías de la estadística y las matemáticas (series temporales, optimización matemática, inferencia estadística, etc.)
+-   Existe una comunidad activa que ha promovido el incremento en su número de usuarios ([\textcolor{cyan}{The R Project}](https://www.r-project.org/), [\textcolor{cyan}{R Contributor Site}](https://contributor.r-project.org/slack), [\textcolor{cyan}{RStudio Community}](https://community.rstudio.com/) y [\textcolor{cyan}{R Bloggers}](http://www.r-bloggers.com)).
+
+## R y RStudio
+
+::: columns
+::: {.column width="50%"}
+
+\bigskip
+
+RStudio es un \textbf{IDE (Integrated Development Environment)} para el lenguaje de programación R.
+
+\bigskip
+
+Para instalar R: \textcolor{cyan}{https://cran.r-project.org/}
+
+\bigskip
+
+Para instalar RStudio: \textcolor{cyan}{http://www.rstudio.com/download}
+
+\bigskip
+
+RStudio facilita el trabajo con R a través de una interfaz que es común a Windows, Mac OS y Linux.
+:::
+
+::: {.column width="25%"}
+
+![Caption for the picture.](Figuras/R.jpg)\
+
+\bigskip
+
+\bigskip
+
+![Caption for the picture.](Figuras/RStudio.png)\
+:::
+:::
+
+# Elementos básicos de R
+
+## Estructuras de datos en R
+
+En lo sucesivo, nos concentraremos en las estructuras de datos representadas en la **Figura 1**. (La figura omite los arreglos, `array()`, que es el resultado de aumenta la dimensión de una matriz).
+
+![Estructuras principales de datos en R](Figuras/Estructures.png){width="75%"}
+
+
+
+## Tipos de vectores
+
+::: columns
+::: {.column width="60%"}
+
+\bigskip
+
+\bigskip
+
+La función `class()` permite recuperar alguna de las siguientes clases
+
+-   Cadena de caracteres
+-   Numérico (*double*)
+-   Entera
+-   Lógico
+:::
+  
+::: {.column width="40%"}
+![Clases de vectores](Figuras/Clases.png)
+:::
+:::
+  
+## Vectores
+  
+::: columns
+::: {.column width="60%"}
+El **operador de asignación** `<-` es usado para asignar un nombre al objeto. Para definir vectores:
+  
+```{r, echo=TRUE, eval = T}
+v1 <- c("a", "b", "c")
+v1
+```
+
+Para seleccionar el elemento $i$:
+  
+```{r, echo=TRUE, eval = T}
+v1[3]
+```
+
+Recuerde que
+
+-   `length()`muestra la longitud
+-   `typeof()`muestra el tipo de vector
+-   `names()` nombra los elementos
+-   R usa **ejecución por elementos**
+:::
+  
+::: {.column width="40%"}
+![Ejemplos de ejecución por elementos](Figuras/Vectores.png)
+:::
+:::
+  
+  
+  
+## Matrices
+  
+::: columns
+::: {.column width="60%"}
+Una matriz se define usando `matrix()`. El parámetro `byrow` determina si las entradas son completadas por filas (`TRUE`) o columnas (`FALSE`). Así
+
+```{r, echo=TRUE, eval = T}
+m1 <- matrix(c(1,2,3,5), nrow = 2, ncol = 2, byrow = T)
+m1
+```
+
+Las entradas son seleccionadas con `[i, j]`:
+  
+```{r, echo=TRUE, eval = F}
+m1[2,2] # Fila 2 y columna 2
+m1[2,]  # Fila 2
+m1[ ,2] # Columna 2
+```
+
+:::
+  
+::: {.column width="40%"}
+![Uso de índices en matrices](Figuras/Matrices.png)
+
+:::
+:::
+
+**Funciones importantes:** `rbind` (permite agregar filas), `cbind` (permite agregar columnas, `dim` (proporciona las dimensiones), `diag` extrae elementos de la diagonal, `nrow` y `ncol()` (proporciona el no. de filas y columnas, respectivamente)
+
+## Nota: operaciones con matrices
+  
+::: columns
+::: {.column width="50%"}
+
+\bigskip
+
+\bigskip
+
+A diferencia de la ejecución por elemento `a*b`, el producto de matrices se obtiene de
+
+```{r, echo=TRUE, eval = T}
+m1 %*% t(m1) # m1 por su traspuesta
+```
+
+La **Figura 5** muestra otras operaciones útiles usando matrices.
+
+:::
+  
+::: {.column width="50%"}
+![Operaciones con matrices](Tablas/Operaciones_matrices.png)
+:::
+:::
+  
+## Data frames
+  
+Los data frames son estructuras rectangulares de datos que pueden contener objetos de diferente tipo (cadena, numéricos, lógicos, etc.). Creamos un data frame con tres columnas (*id*, *sexo* y *edad*):
+  
+```{r, echo=T, eval=T}
+id = 1:4
+sexo = factor(c("male", "male", "female", "female"))
+edad = c(15, 26, 43, 56)
+df = data.frame(id, sexo, edad)
+df
+```
+
+Al igual que una matriz, se seleccionan sus entradas usando `[i,j]`. También:
+  
+  
+```{r, echo=T, eval=F}
+df$edad              # seleccionar variable edad
+df$edad[1]           # primer elemento de edad
+df[c("id", "edad")]  # seleccionar las variables id y edad
+```
+
+Para verificar los nombres de las variables usamos `colnames()`. 
+
+## Listas
+
+::: columns
+::: {.column width="50%"}
+Las listas son estructuras heterogéneas de datos. Aunque son estructuras unidimensionales, las listas permiten almacenar objetos de distinta clase (vectores, matrices, data frames, otras listas). Así:
+  
+  
+```{r, echo=TRUE, eval = T}
+lista <- list(vector1 = v1, 
+              matriz = m1, dataframe = df)
+lista
+```
+
+
+:::
+  
+::: {.column width="50%"}
+
+\bigskip
+
+\bigskip
+
+![Uso de índices en listas](Figuras/Listas.png)
+:::
+:::
+  
+  
+## Condicionales
+  
+::: columns
+::: {.column width="50%"}
+
+\bigskip
+
+\bigskip
+
+Usando condicionales, una operación es ejecutada si la condición se cumple (`TRUE`); de otro modo (`ELSE`), establece la operación que es ejecutada si la condición no se cumple (`FALSE`). La estructura general es la siguiente:
+  
+  
+```{r, echo=TRUE, eval = F}
+if (condition) {
+  # Ejecutado cuando la condición es verdadera
+} else {
+  # Ejecutado cuando la condición es falsa
+}
+```
+
+
+:::
+  
+::: {.column width="50%"}
+![Descripción de operadores](Tablas/Operadores.png)
+:::
+:::
+  
+## Funciones
+  
+En general, la estructura de una función es la siguiente:
+
+```{r, echo=TRUE, eval = F}
+function(arg_1 = x1, arg_2 = x2, ..., arg_n = xn)
+```
+
+A partir de `function()`, se pueden crear funciones con base en la siguiente estructura:
+  
+```{r, echo=TRUE, eval = F}
+my_function = function(args){
+  #statement
+  #statement
+  #statemente
+  return(y)
+}
+```
+
+Cuando se usan funciones definidas en una librería, se pueden conocer los detalles de los argumentos y la salida de la funciones con los comandos `??`y `help()`. 
+
+## Ejercicio 
+
+\begin{enumerate}
+
+\item{Crear una matriz partir de tres vectores (una cadena y dos numéricos). Convertir la matriz en data frame y seleccionar el elemento (2, 3)}
+
+\item{Crear una función que, si la entrada es un vector numérico, la salida sea la media, la mediana, el percentil 25 y 75. (Para la salida use una lista). }
+
+\end{enumerate}
+
+
+# Herramientas para la manipulación de datos
+
+## Paquetes en R
+
+Los paquetes en R son colecciones de funciones, datos y documentación cuyo objetivo es  extender las capacidades básicas de R. **CRAN** (The Comprehensive R Archive Network) es una red de servidores que almacenan versiones de R, así como librerías en R que cumplen las políticas del repositorio \textcolor{cyan}{(CRAN, 2022)}.
+
+Para instalar paquetes del repositorio **CRAN**:
+  
+```{r, echo=TRUE, eval = F}
+install.packages(“dplyr”)
+```
+
+Después de instalar el paquete, se debe cargar la librería:
+
+```{r, echo=TRUE, eval = F}
+library(dplyr)
+```
+
+Para encontrar la documentación del paquete:
+  
+```{r, echo=TRUE, eval = F}
+help(dplyr)
+```
+
+## Tidyverse
+
+::: columns
+::: {.column width="50%"}
+
+\bigskip
+
+\bigskip
+
+\bigskip
+
+**Tidyverse** es un conjunto de librerías en R diseñadas para el análisis de datos (importar, transforma, visualizar y modelar con datos) (Wickham, 2019).
+
+\bigskip
+
+Nos concentraremos en las siguientes librerías:
+  
+- dplyr
+- ggplot2
+- forcats*
+  
+:::
+  
+::: {.column width="50%"}
+![Librerías en Tidyverse](Figuras/Tidyverse.png)
+:::
+:::
+  
+## Importar datos
+  
+El primer paso es definir el directorio de trabajo:
+  
+```{r, echo=TRUE, eval=F}
+setwd("path")
+```
+
+Nos concentraremos en funciones para importar los siguientes formatos de datos
+\begin{table}[ht]
+\centering
+\resizebox{11cm}{!}{
+  \begin{tabular}{|*{4}{c|}}
+  \hline
+  \textbf{Formato} & \textbf{Formato específico}  & \textbf{Función} & \textbf{Paquete}  \\
+  \hline
+  Texto o tabulares & CSV   &  read\_csv()        & readr \\  
+  \cline{2-4}
+  &      Otros formatos de texto    &  read\_delim()   &        readr              \\ 
+  \hline
+  Formatos de otros programas           &  Excel         & read\_excel()           &  readxl   \\ 
+  \cline{2-4}
+  & SPSS   &  read\_sav()         &  haven                   \\  
+  \cline{2-4}
+  & STATA          &  read\_dta()         & haven                     \\  
+  \cline{2-4}
+  & SAS          &  read\_sas()         &   haven                   \\
+  \hline
+  
+  Formatos propios de R          &  .rda         & load()           &  base   \\ 
+  \cline{2-4}
+  & .rds   &  readRDS()         &    base                 \\  
+  \hline
+  \hline
+  \end{tabular}
+}
+\label{tab:multicol}
+\end{table}
+
+## Pipe (%>%)
+
+La tubería de comando o *pipeline* (`%>%`) es una herramienta utilizada para el encadenamiento de funciones. El operador nos permite escribir una secuencia de operaciones
+
+Una secuencia en su **forma estándar** sigue la forma
+
+```{r, echo=TRUE, eval=F}
+dataset_2 <- dplyr::filter(dataset, attend > 15 & attend != 20)
+
+```
+
+En **forma encadenada**:
+
+```{r, echo=TRUE, eval=F}
+dataset_2 <- dataset %>% dplyr::filter(attend > 15 & attend != 20)
+```
+
+El siguiente atajo es útil: ![Caption for the picture.](Figuras/Atajo.jpg){width=110}\
+
+## Dplyr
+
+El paquete **dplyr** proporciona una sintaxis para la manipulación de datos. (El operador `%>%` pertenece a la sintaxis de dplyr). Nos concentraremos en las siguientes funciones:
+  
+![Algunas funciones en el paquete dplyr](Figuras/Dplyr.png){width=300}
+
+## Resumen por grupo
+
+::: columns
+::: {.column width="50%"}
+
+\bigskip
+
+Usando las funciones `summarize()` y `group_by()`, obtenemos un resumen descriptivo de la base de datos diferenciado según una o más variables de control. Por ejemplo:
+  
+```{r, echo=TRUE, eval=F}
+# Resumen general
+table_1 <- new_dataset %>% filter(Int_attend == "Group 4")
+%>%   summarize(MeanAttend = mean(attend),SdAttend = sd(attend)) 
+```
+
+```{r, echo=TRUE, eval=F}
+# Resumen diferenciado
+table_2 <- new_dataset %>% group_by(Int_attend) %>%
+  summarize(MeanAttend = mean(attend), SdAttend = sd(attend))
+```
+
+La **Figura 10** muestra el funcionamiento de `summarize()` y `group_by()`.
+
+:::
+  
+::: {.column width="46%"}
+![Caption for the picture.](Figuras/Group_summary.png)
+:::
+:::
+  
+## ggplot2
+  
+El paquete **ggplot2** proporciona un sistema coherente para visualizar datos y crear gráficos. La versatilidad de **ggplot2** radica en el uso de la Gramática de Gráficos (*Grammar of Graphics*).
+
+```{r, eval =F, echo=T}
+ggplot(dataset, aes()) + geometría + faceta + opciones
+```
+
+donde:
+  
+\begin{enumerate}
+
+\item{\textit{dataset} es un data frame}
+
+\item{Las características del mapa \textbf{aes()} describe los ejes $(x,y)$, el color exterior (\textbf{color} o \textbf{colour}), el color interior (\textbf{fill}), la forma de los puntos (\textbf{shape}), el tipo de línea (\textbf{linetype}) y el tamaño (\textbf{size})}
+
+\item{Los objetos geométricos (\textbf{geometría}) determinan el tipo de gráfico:
+    
+  \begin{itemize}
+  
+  \item{Puntos ($geom\_point$)}
+  \item{Líneas ($geom\_lines$)}
+  \item{Histogramas ($geom\_histogram$)}
+  \item{Boxplot ($geom\_boxplot$)}
+  
+  \end{itemize}
+}
+
+\item{La \textbf{faceta} permite dividir un gráfico en múltiples gráficos de acuerdo con grupos}
+
+
+
+\end{enumerate}
+
+## Ejercicios
+
+
+\begin{enumerate}
+
+\item{Crear un gráfico que el ingreso promedio de acuerdo con la edad en años para las personas ocupados. Presente la gráfica diferenciada por ciudades.}
+
+\item{Filtra la base de datos de personas ocupadas para el grupo de mujeres con ingresos de \$2.000.000 –  \$5.000.000. Muestre un gráfico sobre el nivel de educación en esta población.}
+
+\end{enumerate}
+
+
+# Recursos alternativos
+
+
+- La librería `swirl` proporciona un tutorial sobre elementos básicos en R
+
+```{r, echo=TRUE, eval=FALSE}
+install.packages(“swirl”)
+library (swirl)
+swirl()
+```
+
+
+
+- Data wrangling with dplyr and tidyr (Cheat Sheet): [\textcolor{cyan}{Recurso 1.2}](https://github.com/sergiobarona03/Curso_EDA_2024_I/blob/main/Recursos%20alternativos/M%C3%B3dulo%201/Recurso12.pdf)
+
+- Visualización de datos usando ggplot2 (Guía Rápida): [\textcolor{cyan}{Recurso 1.3}](https://github.com/sergiobarona03/Curso_EDA_2024_I/blob/main/Recursos%20alternativos/M%C3%B3dulo%201/Recurso13.pdf)
+
+- Factors with forcats (Cheat Sheet): [\textcolor{cyan}{Recurso 1.4}](https://github.com/sergiobarona03/Curso_EDA_2024_I/blob/main/Recursos%20alternativos/M%C3%B3dulo%201/Recurso14.pdf)
+  
+  \end{itemize}
+  
+# Bibliografía de consulta
+  
+\begin{itemize}
+  
+\item{Wickham, H. (2016) GGplot2. Elegant Graphics for Data Analysis. Springer}
+  
+\item{Grolemund, G. (2014). Hands-On Programming with R. O’Reilly Media: Sebastopol, CA.}
+
+\item{Schutt, R. \& O’Neil, C. (2014). Doing Data Science. O’Reilly Media: Sebastopol, CA.}
+  
+\item{Wickham \& Grolemund, G. (2016). R for Data Science: Import, Tidy, Transform, Visualize, and Model Data. O’Reilly Media: Sebastopol, CA.}
+  
+\end{itemize}
+  

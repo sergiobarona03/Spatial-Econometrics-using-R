@@ -1,0 +1,285 @@
+
+#####################
+## Preparar datos  ##
+#####################
+library(readxl)
+library(gdata)
+library(cartography)
+library(lubridate)
+library(raster)
+library(stringr)
+library(tidyverse)
+library(sf)
+library(ggspatial)
+library(ellipse)
+library(gridExtra)
+library(plyr)
+library(dplyr)
+library(ggplot2)
+library(terra)
+library(RColorBrewer)
+
+
+###########################
+## Cargar bases de datos ##---------------------------------------------------------------------------------------------------------
+###########################
+# Zona urbana como shapefile y data.frame
+urbano <- read_sf(dsn = "Comunas", layer = "Comunas_WGS84")
+urbano_st <- st_read('Comunas/Comunas_WGS84.shp')
+
+# Zona rural como shapefile y data.frame
+rural <- read_sf(dsn = "Corregimientos", layer = "Corregimientos_WGS84")
+rural_st <- st_read('Corregimientos/Corregimientos_WGS84.shp')
+
+# Expansión urbana como shapefile y data.frame
+exp <- read_sf(dsn = "Planificacion", layer = "Expansion")
+exp_st <- st_read('Planificacion/Expansion.shp')[c("nombre_upu", "geometry")] # conservar geometría
+
+#############################################################
+## Recuperación de variable: estrato socioeconómico (moda) ##------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+#############################################################
+# Estrato socioeconómico: zona urbana
+estrato_urbano = as.data.frame(read_excel("Estrato_moda_urbano.xlsx"))# Cargar
+colnames(estrato_urbano) = c("COMUNA", "Estrato") # Cambiar nombres
+urbano_st = merge(urbano_st, 
+                  estrato_urbano, by = "COMUNA") # Merge: geometría urbana y estrato moda
+
+# Estrato socioeconómico: zona rural
+estrato_rural = data.frame(id_correg = c(53, 52, 51), Estrato = c("Alto",
+                                                                  "Bajo", 
+                                                                  "Bajo")) # crear data.frame (nivel socioeconómico)
+rural_st = merge(rural_st, estrato_rural, by = "id_correg", all.x = TRUE) # Merge: geometría rural y nivel socieconómico
+
+#######################
+##  Ríos y río Cauca ##------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+#######################
+# Cargar ríos como shapefile y data.frame
+rios = read_sf(dsn = "Rios Cali", layer = "Rios Cali_WGS84")
+rios_st = st_read('Rios Cali/Rios Cali_WGS84.shp')
+
+# Cargar río Cauca como shapefile y data.frame
+rio_cauca = read_sf(dsn = "Rio Cauca", layer = "Rio Cauca_WGS84")
+rio_cauca_st = st_read('Rio Cauca/Rio Cauca_WGS84.shp')
+
+#######################
+## Humedales urbanos ##------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+#######################
+
+# cargar shapefile y data.frame
+humedales_urbanos <- shapefile('Humedales/Humedales_urbanos_WGS84_Corregido.shp')
+humedales_urbanos_st <- st_read('Humedales/Humedales_urbanos_WGS84_Corregido.shp')
+
+# Recodificación
+humedales_urbanos$nom_recod = humedales_urbanos$HumNom
+humedales_urbanos$nom_recod[substr(humedales_urbanos$nom_recod, 1, 14) == "Humedal Batall"] = "Batallon"
+humedales_urbanos$nom_recod[humedales_urbanos$nom_recod == "Humedal Club Campestre I"] = NA
+humedales_urbanos$nom_recod[humedales_urbanos$nom_recod == "Humedal Club Campestre II"] = NA
+humedales_urbanos$nom_recod[humedales_urbanos$nom_recod == "Humedal Club Campestre III"] = "Club Campestre" 
+humedales_urbanos$nom_recod[humedales_urbanos$nom_recod == "Humedal Club Campestre IV"] = NA
+humedales_urbanos$nom_recod[humedales_urbanos$nom_recod == "Humedal Club Campestre V"] = NA
+humedales_urbanos$nom_recod[humedales_urbanos$nom_recod == "Humedal Club Campestre VI"] = NA
+humedales_urbanos$nom_recod[humedales_urbanos$nom_recod == "Humedal Club Campestre VII"] = NA
+humedales_urbanos$nom_recod[humedales_urbanos$nom_recod == "Humedal Club Campestre VIII"] = NA
+
+humedales_urbanos$nom_recod[humedales_urbanos$nom_recod == "Univalle I"] = NA
+humedales_urbanos$nom_recod[humedales_urbanos$nom_recod == "Univalle II"] = "Univalle"
+
+humedales_urbanos$nom_recod[humedales_urbanos$nom_recod == "U. Javeriana I"] = "Javeriana"
+humedales_urbanos$nom_recod[humedales_urbanos$nom_recod == "U. Javeriana II"] = NA
+humedales_urbanos$nom_recod[humedales_urbanos$nom_recod == "U.Javeriana III"] = NA
+humedales_urbanos$nom_recod[humedales_urbanos$nom_recod == "Javeriana IV"] = NA
+
+humedales_urbanos$nom_recod[humedales_urbanos$nom_recod == "Humedales club shalom I"] = "Shalom"
+humedales_urbanos$nom_recod[humedales_urbanos$nom_recod == "Humedales club shalom II"] = NA
+humedales_urbanos$nom_recod[humedales_urbanos$nom_recod == "Humedales club shalom III"] = NA
+humedales_urbanos$nom_recod[humedales_urbanos$nom_recod == "Humedales club shalom IV"] = NA
+humedales_urbanos$nom_recod[humedales_urbanos$nom_recod == "Humedales club shalom V"] = NA
+humedales_urbanos$nom_recod[humedales_urbanos$nom_recod == "Humedales club shalom VI"] = NA
+humedales_urbanos$nom_recod[humedales_urbanos$nom_recod == "Humedales club shalom VII"] = NA
+humedales_urbanos$nom_recod[humedales_urbanos$nom_recod == "Humedales club shalom VIII"] = NA
+
+humedales_urbanos$nom_recod[humedales_urbanos$nom_recod == "El Retiro I"] = NA
+
+humedales_urbanos$nom_recod[humedales_urbanos$nom_recod == "Humedal San Buenaventura"] = "San Buenaventura"
+humedales_urbanos$nom_recod[humedales_urbanos$nom_recod == "Humedal Club del Municipio"] = "Club del Municipio"
+humedales_urbanos$nom_recod[humedales_urbanos$nom_recod == "Humedal Panamericano"] = "Panamericano"
+
+
+humedales_urbanos$nom_recod[humedales_urbanos$nom_recod == "Humedal Charco Azul"] = "Charco Azul"
+humedales_urbanos$nom_recod[humedales_urbanos$nom_recod == "Humedal El Pondaje"] = "El Pondaje"
+humedales_urbanos$nom_recod[humedales_urbanos$nom_recod == "Humedales Isaias Duarte Cancino"] = "Isaias Duarte Cancino"
+humedales_urbanos$nom_recod[humedales_urbanos$nom_recod == "Rerservorio Puerto Mallarino"] = "Puerto Mallarino"
+
+humedales_urbanos$nom_recod[humedales_urbanos$nom_recod == "Humedal Limonar"] = "El Limonar"
+humedales_urbanos$nom_recod[humedales_urbanos$nom_recod == "Humedal La Babilla Zanjón del Burro"] = "La Babilla Zanjón del Burro"
+
+#######################
+## Humedales rurales ##------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+#######################
+# Cargar shapefile y data.frame
+humedales_rurales <- shapefile('Humedales/Humedales_Rurales_WGS84.shp')
+humedales_rurales_st <- st_read('Humedales/Humedales_Rurales_WGS84.shp')
+
+#######################
+## Datos: encuesta   ##------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+#######################
+encuesta <- readxl::read_excel("Datos_recod.xlsx") # cargar encuesta
+humedales_encuesta <- levels(as.factor(encuesta$wetland)) # vector de humedales en la encuesta
+
+count_encuesta <- dplyr::count(encuesta, wetland) # Conteo de encuestas por humedal
+colnames(count_encuesta) = c("nombre", "n") # Cambiar nombres
+
+humedales_rurales <- merge(humedales_rurales,
+                           count_encuesta, by = "nombre") #Merge: humedal rural y encuesta
+
+colnames(count_encuesta) = c("nom_recod", "n")
+humedales_urbanos <- merge(humedales_urbanos, count_encuesta, by = "nom_recod") #Merge: humedal urbano y encuesta
+
+
+######################################################
+## División de los datos según nivel socioeconómico ##--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+######################################################
+urbano_st$Estrato = factor(urbano_st$Estrato,
+                           levels = c(1,2,3,4,5,6),
+                           labels = c("Bajo", "Bajo",
+                                      "Medio", "Medio",
+                                      "Alto", "Alto"))  # Recodificación estrato-nivel
+
+# Geometrías urbanas diferenciadas según nivel socioeconómico
+urbano_bajo <- urbano_st %>% filter(Estrato == "Bajo")
+urbano_medio <- urbano_st %>% filter(Estrato == "Medio")
+urbano_alto <-  urbano_st %>% filter(Estrato == "Alto")
+
+# Humedales urbanos diferenciados según nivel socieconómico
+humedales_bajo =  subset(humedales_urbanos, Comuna %in% urbano_bajo$COMUNA)
+humedales_medio =  subset(humedales_urbanos, Comuna %in% urbano_medio$COMUNA)
+humedales_alto =  subset(humedales_urbanos, Comuna %in% urbano_alto$COMUNA)
+humedales_alto = subset(humedales_alto, nom_recod %in% humedales_encuesta)
+
+# Coordenadas para ubicar el número de encuestas (humedales urbanos)
+urbano_sites = data.frame(Estrato = c("Bajo", "Medio",
+                                      "Alto"),
+                          n = c(sum(humedales_bajo@data$n),
+                                sum(humedales_medio@data$n),
+                                sum(humedales_alto@data$n)),
+                          x = c(-76.49525,
+                                -76.54468,
+                                -76.53343),
+                          y = c(3.42,
+                                3.41549,
+                                3.37728))
+
+# Humedales rurales diferenciados según nivel socieconómico
+humedales_rurales_bajos <- subset(humedales_rurales, !is.na(n))
+humedales_rurales_bajos <- subset(humedales_rurales_bajos, nombre != "Las Garzas")
+humedales_rurales_bajos <- humedales_rurales_bajos[c(1,3:7),]
+humedales_rurales_altos <- subset(humedales_rurales, nombre == "Las Garzas")
+
+# Coordenadas para ubicar el número de humedales (rurales)
+rural_sites <- data.frame(c("Bajo", 
+                            "Alto"),
+                          n = c(sum(humedales_rurales_bajos@data$n),
+                                sum(humedales_rurales_altos@data$n)),
+                          x = c(-76.48294,
+                                -76.590203),
+                          y = c(3.35099,
+                                3.326778))
+urbano_sites$Area <-  rep("Urbana", nrow(urbano_sites))
+rural_sites$Area <-  rep("Rural", nrow(rural_sites))
+sites <- rbind(urbano_sites[c("Area", "n", "x", "y")],
+               rural_sites[c("Area", "n", "x", "y")])
+
+
+# Definición de las geometrías fill y NA
+urbano_bajo_fill <- subset(urbano_bajo, COMUNA %in% humedales_bajo$Comuna) 
+urbano_bajo_na <- subset(urbano_bajo, !COMUNA %in% humedales_bajo$Comuna) 
+
+urbano_medio_fill <- subset(urbano_medio, COMUNA %in% humedales_medio$Comuna) 
+urbano_medio_na <- subset(urbano_medio, !COMUNA %in% humedales_medio$Comuna)
+
+urbano_alto_fill <- subset(urbano_alto, COMUNA %in% humedales_alto$Comuna) 
+urbano_alto_na <- subset(urbano_alto, !COMUNA %in% humedales_alto$Comuna)
+
+
+###############################################################
+## Paleta de colores: diferencias según nivel socioeconómico ##--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+###############################################################
+palette_ses <- hcl.colors(6, "OrYel")
+palette_ses <-  palette_ses[2:6]
+col_point <- alpha("red", 0.65)
+
+
+##################################################
+## Figura 2: Localización: Cali rural y urbano  ##
+##################################################
+
+rural_st_na <- rural_st %>%  filter(is.na(Estrato))
+rural_st_estrato <- rural_st %>%  filter(!is.na(Estrato))
+rural_st_estrato$Estrato[rural_st_estrato$Estrato == "Alto"] <- "High peri-urban"
+rural_st_estrato$Estrato[rural_st_estrato$Estrato == "Bajo"] <- "Low peri-urban"
+
+urbano_st_local <- rbind(urbano_bajo_fill, urbano_medio_fill, urbano_alto_fill)
+urbano_st_na <- rbind(urbano_bajo_na, urbano_medio_na, urbano_alto_na)
+urbano_st_local$Estrato <- as.character(urbano_st_local$Estrato)
+urbano_st_local$Estrato[urbano_st_local$Estrato == "Bajo"] <- "Low urban"
+urbano_st_local$Estrato[urbano_st_local$Estrato == "Medio"] <- "Medium urban"
+urbano_st_local$Estrato[urbano_st_local$Estrato == "Alto"] <- "High urban"
+
+
+plot_local <- ggplot() + 
+  geom_sf(data = st_as_sf(rural_st_na),fill = "wheat2",col = alpha("black", 0.3)) + 
+  geom_sf(data = st_as_sf(rural_st_estrato), aes(fill = Estrato), col = alpha("black", 0.3)) +
+  geom_sf(data = st_as_sf(urbano_st_na),fill = alpha("wheat2", 0.5),col = alpha("black", 0.3))+
+  geom_sf(data = st_as_sf(urbano_st_local), aes(fill = Estrato), col = alpha("black", 0.3)) +
+  geom_sf(data = st_as_sf(exp_st), fill = alpha("wheat2", 0.5), col = alpha("black", 0.3)) 
+
+
+
+  geom_sf(data = st_as_sf(rural_st_estrato), aes(fill = Estrato), col = alpha("black", 0.3)) +
+  geom_sf(data = st_as_sf(rios), fill = "cornflowerblue",color = "cornflowerblue")+
+  geom_sf(data = st_as_sf(rio_cauca), fill = "cornflowerblue",color = "cornflowerblue") +
+  geom_point(data = sites, aes(x = x, y = y, shape = Area),
+             size = 10, col = col_point,
+             fill = col_point)+
+  geom_text(data = sites, aes(x = x, y = y, label = n), size = 2.5) +
+  geom_sf_label(data = st_as_sf(rio_cauca),aes(label = nombre),size = 2.5)+
+  geom_sf_label(data = st_as_sf(rios),aes(label = nombre),size = 2.5) +
+  scale_fill_manual(values = palette_ses, breaks = c("Low urban",
+                                                     "Medium urban",
+                                                     "High urban",
+                                                     "Low peri-urban",
+                                                     "High peri-urban"))+ 
+  scale_shape_manual(values = c('Urbana' = 21, 'Rural' = 22), 
+                     breaks = c("Urbana", "Rural"), labels = c("Urban area",
+                                                               "Peri-urban area"))
+
+
+plot_local_theme <- plot_local + ggtitle(" ") +
+  theme(panel.grid.major = element_line(color = gray(.5), linetype = "dashed",
+                                        size = 0.5),
+        plot.title=element_text(hjust = 0,size = 12,
+                                family="serif",face = "italic"),
+        panel.grid=element_blank(),
+        legend.position = c(0.05, 0.99),
+        legend.justification = c("left", "top"),
+        legend.box.just = "left",
+        legend.margin = margin(2, 2, 2, 2),
+        legend.key.size = unit(0.38, 'cm'), #change legend key size
+        legend.key.height = unit(0.38, 'cm'), #change legend key height
+        legend.key.width = unit(0.38, 'cm'),
+        legend.background = element_rect(colour = 'black',
+                                         fill = 'white', 
+                                         linetype='solid'),
+        panel.border = element_rect(colour = "black", fill=NA, size=2)) +
+  annotation_scale(location = "bl", pad_x = unit(0.4, "in"), pad_y = unit(0.3, "in"))+
+  annotation_north_arrow(location = "bl", which_north = "true",
+                         pad_x = unit(0.4, "in"), pad_y = unit(0.4, "in"),
+                         style = north_arrow_fancy_orienteering, 
+                         height = unit(2, "cm"),
+                         width = unit(2, "cm")) + 
+  guides(fill=guide_legend(title="Socioeconomic Status"),
+         shape = guide_legend(title = "Sample size"))
+
+ggsave(filename = "plot_local.png",
+       plot = plot_local_theme,
+       width = 7, height = 7)

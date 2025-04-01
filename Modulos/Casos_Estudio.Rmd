@@ -1,0 +1,55 @@
+---
+title: "Casos de Estudio"
+author:
+- Laboratorio de Economía Aplicada (LEA)
+- Departamento de Economía y Finanzas
+date: '2025-04-29'
+output:
+  html_document:
+    toc: true
+    toc_float:
+        collapsed: true
+        smooth_scroll: false
+    number_sections: true
+    theme: spacelab
+    highlight: tango
+institute:
+- Laboratorio de Economía Aplicada (LEA)
+- Pontificia Universidad Javeriana de Cali
+fontsize: 9 pt
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Caso de estudio 1
+
+El **Caso de estudio 1** corresponde a la proporción de personas en NBI, diferenciadas según departamentos. Nótese que, adicionalmente, se incorporan los siguientes indicadores relacionados con las Necesidades Básicas Insatisfechas (NBI): proporción de personas en miseria, así como los componentes de vivienda, servicios, hacinamiento, inasistencia y dependencia económica.
+
+
+Esta base de datos es complemetada con las variables que se presentan en la siguiente tabla: 
+
+```{r, echo=FALSE, results='asis'}
+library(knitr)
+
+# Crear la tabla
+tabla <- data.frame(
+  Variable = c("Índice NBI (Variable dependiente)", 
+               "Población urbana", 
+               "Tasa de desempleo", 
+               "Ingresos corrientes/Ingresos totales del municipio", 
+               "LN Extensión KM²"),
+  Descripción = c("Índice de Necesidades Básicas Insatisfechas (NBI).", 
+                  "Número de habitantes del municipio en 2005, según el Censo de 2005.", 
+                  "Tasa de desempleo con base en los datos del Censo General de 2005.", 
+                  "Relación entre los ingresos corrientes totales y los ingresos totales de un municipio, como una medida de autonomía o dependencia de los ingresos respecto a las transferencias (DNP).", 
+                  "Logaritmo natural del total de kilómetros cuadrados del municipio. Variable de control del tamaño de cada municipio.")
+)
+
+# Imprimir la tabla en formato kable
+kable(tabla, format = "markdown", align = "l")
+```
+
+
+# Caso de estudio 2

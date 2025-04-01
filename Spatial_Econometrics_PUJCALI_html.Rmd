@@ -1,0 +1,928 @@
+---
+title: "**Introducción a la Modelación de Datos Espaciales usando R**"
+subtitle: ""
+
+author: 
+- Presentado por \newline
+- Mauricio Quiñones Domínguez, Ph.D. Política Pública \newline
+- Profesor Dpto. de Economía Universidad Javeriana Cali \newline
+- Diseño conjunto con \newline
+- Sergio Barona, M.Sc. Coordinador Laboratorio de Economía Aplicada - LEA \newline
+
+institute:
+- Universidad Javeriana Cali
+
+date: "FECHA POR DEFINIR"
+output:
+  html_document:
+    toc: true
+    toc_float:
+        collapsed: true
+        smooth_scroll: false
+    number_sections: true
+    theme: spacelab
+    highlight: tango
+    
+header-includes:
+  - \AtBeginEnvironment{CSLReferences}{\tiny}
+  - \AtBeginSection{}
+---
+
+<font face="" size = 5> 
+
+# **Presentación del Curso**
+
+- La dimensión espacial que es objeto de análisis en otras disciplinas, afecta también las variables socioeconómicas. Al integrar la distancia geográfica con la modelación econométrica, se puederen refinar las estimaciones y capturar efectos que antes no eran tenidos en cuenta.
+
+## Objetivos del curso
+
+  1. Presentar por qué se considera que se debe tener en cuenta la distribución en el espacio para la modelación econométrica.
+
+  2. Definir y construir una matriz de pesos espaciales.
+
+  3. Interpretar los resultados e índices que componen el análisis de modelación espacial.
+
+  4. Conocer algunos de los modelos más frecuentes para la modelación espacial (Modelos: SAR, SEM y otros).
+
+  5. Presentar cómo se identifica el tipo de modelación espacial.
+
+## Metodología de aprendizaje
+
+- Metodología de aprendizaje-enseñanza: "Aprender haciendo"
+
+- Los datos analizados son de la encuestade origen-destino (EOD) para Bogotá del 2019.
+
+- Compartimos shape file y archivo de excel con atributos.
+
+Sugerencia
+
+- Guarda los archivos y tu trabajo en 1 carpeta. 
+
+---
+
+# **Motivación: por qué se considera que se debe tener en cuenta la distribución en el espacio para la modelación econométrica**
+
+- **Respuesta: Dependencia espacial**
+
+	i. Primera ley de Geografía de Tobler: “Todo está relacionado con todo lo demás, pero las cosas cercanas están más relacionadas que las distantes”. (1970: 236).
+	
+	- **Autocorrelación espacial**. Las áreas vecinas son similares. Tobler, W. R (1970). "A computer movie simulanting urban growth in the Detroit region." Economic Geography 46(2). 
+	
+	ii. Las áreas de observación son generalmente de diferentes tamaños. Heterogeneidad $\rightarrow$ Heterocedasticidad.
+
+![](C:/Users/Portatil/Desktop/Spatial Econometrics using R/spatecon_images/leyNewton.png){#id .class width=65% height=65%}
+
+	
+![](C:/Users/Portatil/Desktop/Spatial Econometrics using R/spatecon_images/mapa_bogota.png){#id .class width=65% height=65%}
+
+![](C:/Users/Portatil/Desktop/Spatial Econometrics using R/spatecon_images/mapa_bogota_2.png){#id .class width=65% height=65%}
+
+---
+
+## _Heterogeneidad espacial vs Autocorrelación Espacial_
+
+- Los efectos espaciales son propiedades de los datos espaciales que dan como resultado la tendencia de que las observaciones espacialmente próximas de un atributo sean más parecidas que las observaciones más distantes (primera ley de Tobler). Esta agrupación (clustering) en el espacio puede resultar de:
+		
+	- Propiedades inherentes de algunas regiones en el área de estudio que hacen que las unidades analíticas dentro de ellas sean diferentes de las de otras regiones (_heterogeneidad espacial_) o
+
+	- Algún tipo de interacción espacialmente modelada entre unidades vecinas (_autocorrelación espacial_) o
+
+	- Ambos.
+
+## Heterogeneidad espacial 
+
+- Tipificados por diferenciación de la unidad geográfica o proceso espacial que se expresa a lo largo de toda la unidad geográfica bajo estudio.
+
+- **No se asume ninguna interacción espacial** en el proceso que genera heterogeneidad espacial; se desprende de lo que hace única intrínsecamente de cada ubicación o propiedades compartidas por unidades vecinas.
+
+- Distribución no uniforme de las observaciones en el espacio.
+
+- Variación a gran escala de la media en las unidades espaciales unidades espaciales.
+
+- Los valores de las variables no son independientes de su ubicación espacial.
+
+- Resultado de la interacción de las características únicas de las unidades y su ubicación espacial.
+
+### Causas de la heterogeneidad espacial
+
+- Patrones de interacción social que crean características únicas de las unidades espaciales.
+
+	- Regímenes espaciales: legados de las relaciones regionales entre el centro y la periferia $\rightarrow$ diferencias entre unidades (población, PIB, etc.)
+
+- Diferencias en las características físicas de las unidades espaciales. Tamaño y topografía diferentes.
+
+
+- *Si asumimos que la heterogeneidad espacial es un proceso razonable de generación de datos entonces ...*
+
+  - Estamos diciendo que la aparente agrupación de los datos no es el resultado de la interacción espacial entre áreas, no hay influencias vecinas de pequeña escala, no hay contagio.
+
+  - Suponemos que podemos especificar un modelo de regresión con covariables adecuadas de modo que la autocorrelación residual desaparezca.
+
+  - Aceptamos que los efectos estructurales puramente espaciales pueden ser parte de la especificación de nuestro modelo.
+
+---
+
+## Autocorrelación Espacial 
+
+- "… la existencia de una relación funcional entre lo que sucede en un punto del espacio y lo que sucede en otro lugar" (Anselin, 1988:11).
+
+- Esto significa una falta de independencia entre las observaciones (por definición); pero la “relación funcional” es la clave; interacción entre actores sociales/económicos.
+
+- Se expresa en nuestros modelos como un proceso espacial de pequeña escala, localizado y de corta distancia.
+
+- Para el examen de datos en una red espacial irregular (por ejemplo, UTAM), este proceso espacial generalmente se maneja a través de la declaración exógena de un **“vecino”** (una región de influencia) definida para cada observación y se operacionaliza mediante una **“matriz de ponderaciones”.**
+
+- Este proceso se desprende informalmente de la llamada “Primera Ley de la Geografía”; viola el supuesto de unidades de análisis independientes.
+
+
+- *Si asumimos que la dependencia espacial es un proceso razonable de generación de datos entonces ...*
+
+  - Estamos diciendo que la agrupación de nuestros datos resulta de algún tipo de interacción espacial; existencia de influencias vecinas de pequeña escala; (definición de vecindario; elección de matriz de ponderaciones).
+
+  - Creemos que podemos plantear teóricamente razones por las que la agrupación resulta de la interacción espacial o del contagio entre nuestras unidades de observación.
+
+  - Necesitamos pensar en qué tipo de modelo de dependencia debería introducir mejor los efectos vecinos; muchas opciones.
+
+- Covariación localizada entre las medias (u otras estadísticas) dentro de la región.
+
+- Tendencia de las medias a "seguirse" en el espacio.
+
+- Da lugar a grupos de valores similares.
+
+### Causas de la autocorrelación espacial
+
+- El proceso socioeconómico subyacente ha dado lugar a una distribución agrupada de los valores de las variables. Procesos de **agrupación**. 
+	
+- Agrupación de personas similares en zonas localizadas. Procesos de **interacción espacial**. 
+	
+- Las personas cercanas tienen más probabilidades de interactuar, compartir. Procesos de **difusión**.
+	
+- Los vecinos aprenden unos de otros. Procesos de **dispersión**.
+	
+- La gente se desplaza, pero suelen ser distancias cortas, se llevan consigo sus conocimientos. **Jerarquías espaciales.**
+	
+- Influencias económicas que unen a las personas. Desajuste entre el proceso y las unidades espaciales, distritos frente a zonas de comercio minorista o grupos de bloques censales frente a redes de barrios.
+
+**Retos**
+
+- Es un error interpretar correlaciones de grupos como correlaciones de individuos. Robinson, W.S. (1950). "Ecological Correlations and the Behavior of Individuals". American Sociological Review. Robinson → **“Falacia ecológica”**.
+
+- **Modifiable Analysis Unit Problem o MAUP (Problema de unidad de área modificable)**
+		- “Los usuarios habituales de correlaciones ecológicas saben que el tamaño del coeficiente depende en gran medida del número de subáreas. …[E]l tamaño de la correlación ecológica ...aumentará numéricamente a medida que se produzca la consolidación de áreas más pequeñas en áreas más grandes...”. (Robinson, págs. 357-8).
+
+---
+
+# **Definición de la matriz de pesos espaciales**
+	
+- La matriz de pesos espaciales $W$ contiene las ponderaciones para cada unidad geográfica, con base en algún criterio de valoración. El insumo principal para su construcción es la matriz de **distancias**.
+
+- La matriz de distancias calcula la cercanía entre las unidades espaciales analizadas. La medida de distancia más común es la distancia Euclidiana, pero no es la única.
+
+- Primera decisión: Quién es vecino? 
+
+- Matriz criterio Reina, torre o alfil. Estos términos se explican por sí solos y se refieren a qué tipos de celdas adyacentes elegimos incluir como "vecinas".
+
+![](C:/Users/Portatil/Desktop/Spatial Econometrics using R/spatecon_images/imagen6.png){#id .class width=100% height=85%}
+
+- Usando la matriz reina, para una distancia definida, la matriz $W$ se llena con ceros y unos para cumplir el criterio de cercanía.
+
+- $W$ o “Matriz de contigüidad” – un término general que identifica vecinos con 1 y no vecinos con 0.
+
+![](C:/Users/Portatil/Desktop/Spatial Econometrics using R/spatecon_images/fig_mat_ones.png){#id .class width=70% height=70%}
+
+- Luego se debe normalizar a la unidad por cada fila. Es una matriz no-negativa donde la suma por fila es igual a uno.
+
+- “Matriz de ponderaciones”: casi siempre reservaremos este término para referirnos a una matriz de contigüidad estandarizada por filas, con ponderaciones: 0 $\le$ $w_{ij}$ $\le$ 1
+
+![](C:/Users/Portatil/Desktop/Spatial Econometrics using R/spatecon_images/fig_mat_w.png){#id .class width=70% height=70%}
+
+- Por lo tanto, se obtiene una matriz $W$ de dimensiones $N$ x $N$, en este caso $7$ x $7$, que será usada para "rezagar" espacialmente las variables de interés, de acuerdo al tipo de modelación.
+
+![](C:/Users/Portatil/Desktop/Spatial Econometrics using R/spatecon_images/fig_mat_wij.png){#id .class width=70% height=70%}
+
+- Hay muchas variedades de matrices de pesos.
+
+- Se han generado los elementos $wij$ basándose en la adyacencia.
+
+- Hay muchas otras opciones; por ejemplo...
+	- Distancia y distancia inversa.
+	- k vecinos más cercanos (k nearests neighbors - knn). Selecciona el número total de vecinos que deseas encontrar. Esto se llama k. Este método requiere ubicaciones con puntos. También en un buffer de distancias.
+	- Pesos de Cliff-Ord.
+	
+- La matriz de ponderaciones debe basarse en lo posible en la teoría.
+
+- Muchas opciones en R.
+
+- Puede editar $W$ en un editor de texto general.
+
+**Matriz $W$**
+
+```{r loading libryries, fig.cap="", results='show', warning=FALSE, message=FALSE, echo=TRUE}
+library(tidyverse)
+library(spdep)
+library(spatialreg)
+library(classInt)
+library(car)
+library(lmtest)
+library(sp)
+library(spatstat)
+library(RColorBrewer)
+library(StatDA) 
+library(sf)
+library(MASS)
+library(ggpubr)
+library(moments)
+library(nortest)
+library(ggpubr)
+library(stargazer)
+library(flextable)
+```
+
+```{r primeros mapas, fig.cap="", results='show', warning=FALSE, message=FALSE, echo=TRUE}
+
+#---------------------------------------#
+# Cargar datos y convertir en polígonos #
+#---------------------------------------#
+bg.sf <- read_sf(dsn=paste(getwd(),"/EOD_Bogota_2019/Zonificacion_shapefiles/ZONAS", sep = ""), layer="UTAM")
+bg.sf <- st_zm(bg.sf)
+bg.sf %>% head() %>% print(width = 120)
+
+summary(bg.sf)
+#View(bg)
+# Convertir SpatialPolygonsDataFrame en data.frame
+bg.df <- data.frame(bg.sf)
+
+names(bg.df)           # Nombres de las variables
+class(bg.df)           # Clase del objeto
+summary(bg.df)         # Resumen descriptivo
+
+# Cargar la base de datos
+dataset = readxl::read_excel(paste0(getwd(),"/Final.input.dataset.xlsx"))
+
+bg_data <- bg.sf %>% 
+  mutate(Utam = UTAM) %>%
+  left_join(dataset, by = "Utam") %>% na.omit()
+
+# Remover área rual
+bg_data <- bg_data %>% filter(!Utam %in%
+                                          c("UPR1",
+                                            "UPR2",
+                                            "UPR3") )
+bg_data <- bg_data %>% filter(elder > 0, minor > 0, ingresos_bajos > 0,
+                              higher > 0, agre > 0)
+dataset_plot <- data.frame(bg_data)
+
+# Descriptivas
+# summary(dataset_plot$mean_size)    # Tamaño promedio del hogar por UTAM
+# summary(dataset_plot$minor) # Proporción de <18 años por UTAM
+# summary(dataset_plot$elder) # Proporción de >65 años por UTAM
+# summary(dataset_plot$ingresos_bajos) # Proporción de hogares con ingresos < 1'5
+# summary(dataset_plot$higher) # Proporción de personas con educación superior
+# summary(dataset_plot$agre) # Proporción de personas que han recibido agresiones en sus viajes
+
+# Revisión de las conexiones o links del shapefile 
+bg_data_test <- poly2nb(bg_data)
+bg_data_test
+
+# Se eliminan las UTAM que no tienen vecinos. Eliminamos la fila 18 del shapefile. Y se crea la matriz W
+
+bg_data2 <- bg_data[-c(18),]
+bg_data_gal <- poly2nb(bg_data2)
+bgQ1.gal <- nb2listw(bg_data_gal)
+summary(bgQ1.gal)
+
+# Definir data frame
+bg.df <- data.frame(bg_data2)
+
+# Cambiar el nombre de la variable dependiente
+names(bg.df)[names(bg.df) == "Tasa.de.viajes.en.transporte.público.por.persona.al.día."] <- "Rate"
+bg.df$Rate = as.numeric(bg.df$Rate)
+
+summary(bg.df$Rate)
+```
+
+---
+
+# **Interpretación de los resultados e índices que componen el análisis de modelación espacial**
+
+- _Medición de la autocorrelación espacial_
+
+- Dos clases de pruebas de autocorrelación espacial:
+
+- **Medidas de autocorrelación espacial global**
+	- Identifica si los datos en su conjunto presentan un patrón espacial
+	- ¿Existe "agrupación"?
+	
+- Medida más común: estadístico I de Moran (Alfred Pierce Moran (1950)).
+
+- **Estadísticos de indicadores locales de asociación espacial (Local indicators of spatial association - LISA)**
+
+	- Identifica qué unidades de observación de nuestro conjunto de datos están significativamente autocorrelacionadas espacialmente con las unidades vecinas.
+
+- La noción clave es medir que dos propiedades varían juntas. Cuánto importa la proximidad en los datos espaciales.
+
+## **I de Moran global**
+
+- Estadístico I de Moran está inspirado en la covarianza, por lo tanto, tiene similitud con **el coeficiente de correlación de Pearson. Rango: [-1,1]**. Sin embargo, su interpretación no es igual.
+
+**Coeficiente de correlación de Pearson. Rango: [-1,1]**
+
+$$
+r_{xy}=
+\frac{\sum_{i = 1}^{n}(x_i-\overline{x})(y_i-\overline{y})}{\sqrt{\sum_{i = 1}^{n}(x_i-\overline{x})^2\sum_{i = 1}^{n}(y_i-\overline{y})^2}}
+$$
+
+**I de Moran global**
+
+$$
+I =
+\left(\frac{n}{(\sum_{i = 1}^{n}\sum_{j = 1}^{n}w_{ij})}\right)
+\frac{\sum_{i = 1}^{n}\sum_{j = 1}^{n}w_{ij}(y_i-\overline{y})(y_j-\overline{y})}{\sum_{j = 1}^{n}(y_i-\overline{y})^2}
+$$
+
+- Donde $w_{ij}$ son los elementos de la matrix de pesos o ponderaciones $W$.
+
+**Autocorrelación espacial y aleatoriedad espacial**
+
+- Aleatoriedad espacial
+	- Los valores observados en una ubicación no dependen de los valores observados en ubicaciones vecinas.
+	- El patrón espacial de valores observado es igual de probable que cualquier otro patrón espacial.
+	- La ubicación de los valores puede modificarse sin que ello afecte al contenido informativo de los datos.
+	
+![](C:/Users/Portatil/Desktop/Spatial Econometrics using R/spatecon_images/imagen1.png){#id .class width=70% height=70%}
+
+
+- Valor esperado de la I de Moran bajo la hipótesis de ausencia de autocorrelación espacial:
+
+$$E(I)= - 1/(n-1)$$
+
+$$ Var(I) = \frac{n^2S_1-nS_2+3S_0^{2}}{S_0^{2}(n^2-1)}-(E(I))^2$$
+- Donde $S_0, S_1, S_2$ son expresiones definidas que dependen de $w_{ij}$.
+
+- Hipótesis nula: Ausencia de autocorrelación espacial
+
+
+$$t=\frac{I - E(I)}{\sqrt{Var(I)}}$$
+
+- Si no puedo rechazar la hipótesis nula, entonces se debe modelar la autocorrelación espacial.
+
+- Un proceso no correlacionado tiene un I esperado = 0
+
+  - Valores > 0 indican autocorrelación espacial positiva.
+  - Valores < 0 indican autocorrelación espacial negativa.
+
+
+- Recuerdan **Modifiable Analysis Unit Problem o MAUP (Problema de unidad de área modificable)**?.
+
+Las medidas de autocorrelación espacial dependen de la escala
+![](C:/Users/Portatil/Desktop/Spatial Econometrics using R/spatecon_images/imagen10.png){#id .class width=70% height=70%}
+
+### **Ejercicio con la Encuesta Origen-Destino (EOD) de Bogotá año 2019**
+
+```{r I Moran, fig.cap="", results='show', warning=FALSE, message=FALSE, echo=TRUE}
+
+# Véase la información de los pesos de la matriz
+names(attributes(bgQ1.gal))  # Nombres de los atributos
+card(bgQ1.gal$neighbours)    # Número de vecinos para cada observación
+range(card(bgQ1.gal$neighbours))  # Rango (número de vecinos)
+1/rev(range(card(bgQ1.gal$neighbours))) # Rango (pesos)
+summary(bgQ1.gal, zero.policy=T)   # Resumen
+
+# 
+min(bg.df$Rate)      # 0.07728526
+max(bg.df$Rate)      # 0.9365709
+
+# - Rechazo o no?
+moran.test(bg.df$Rate, bgQ1.gal, alternative="two.sided", zero.policy=T)
+
+# Se presenta el mapa sobre  bg.df$Rate. Seleccionar la paleta
+colors <- brewer.pal(5, "YlOrBr")  
+color.cat.reg<-classIntervals(bg.df$Rate, n=5, style="quantile", dataPrecision=2)
+colcode <- findColours(color.cat.reg, colors)
+
+## Figura
+par(mfrow=c(1,1))
+plot(bg_data[c("UTAM", "geometry")], col=colcode)
+title('Tasa Viajes Trans. Pub. por día')
+legend('topleft', legend=c(names(attr(colcode, 'table'))), fill=c(attr(colcode, 'palette')), 
+       title='Tasa Viajes Trans. Pub. por día')
+
+```
+
+## Estadísticos de indicadores locales de asociación espacial (Local indicators of spatial association - **LISA**.
+
+- Medidas locales
+	- Valor calculado para cada observación; identificación de "puntos calientes" y "puntos fríos".
+
+- El estadístico local de Moran para unidad de área es:
+
+$$
+I_i =
+z_i\sum_{j = 1}^{n}w_{ij}z_j
+$$
+
+- Donde $z_i$ es una variable estandarizada
+
+$$
+z_i=
+(x_i-\overline{x})/SD_x
+$$
+
+```{r LISA, fig.cap="", results='show', warning=FALSE, message=FALSE, echo=TRUE}
+
+moran.plot(bg.df$Rate, bgQ1.gal, zero.policy=T, labels=as.character(bg.df$UTAM),
+           xlab=NULL, ylab=NULL, type="p", col="#AE017E",
+           cex=0.8, pch=1)
+
+```
+
+**Cuadrantes del diagrama de dispersión de Moran**
+
+- Cada cuadrante corresponde a 1 de 4 tipos diferentes.
+
+**Ubicaciones de asociación espacial positiva.**
+
+("Soy parecido a mis vecinos")
+
+- $Q_1$ (valores [+], valores cercanos [+]): **H-H**
+- $Q_3$ (valores [-], valores cercanos [-]): **L-L**
+
+**Ubicaciones de asociación espacial negativa.**
+
+("Soy diferente a mis vecinos")
+
+- $Q_2$ (valores [-], valores cercanos [+]): **L-H**
+- $Q_3$ (valores [+], valores cercanos [-]): **H-L**
+
+--- 
+
+![](C:/Users/Portatil/Desktop/Spatial Econometrics using R/spatecon_images/imagen12.png){#id .class width=70% height=70%}
+
+
+---
+
+**Análisis exploratorio de datos espaciales (Exploratory Spatial Data Analysis - ESDA)**
+
+- El análisis de datos espaciales conduce a la estadística espacial. Tipos de datos espaciales
+
+  - Datos de eventos (datos de puntos).
+  - Datos espacialmente continuos (datos geoestadísticos).
+  - Datos de regionalizados.
+  - Datos de interacción espacial (datos de flujo).
+  - Estos tipos de datos no son estrictos, mutuamente exclusivas, categorías.
+
+- Cartografía y visualización - Histogramas, mapas de valores atípicos, diagramas de caja.
+
+- Índices de asociación espacial/ autocorrelación espacial.
+
+- Análisis de patrones puntuales.
+
+- El objetivo es buscar una buena comprensión y descripción de los datos, sugiriendo así hipótesis para explorar.
+
+- Busque especialmente pistas sobre la “heterogeneidad espacial” o la “dependencia espacial”.
+
+- Pocas suposiciones a priori sobre los datos.
+
+- Nuestro objetivo es modelar y extraer inferencias adecuadas sobre un proceso generador de datos aleatorio y no observado.
+
+
+---
+
+
+# **Los modelos más frecuentes para la modelación espacial (Modelos: SAR, SEM y otros)**
+
+## ¿El objetivo es ...?
+
+- Generalmente deseamos comprender (modelar) los aspectos estructurados de nuestros datos, dejando atrás un vector de ruido aleatorio.
+
+- Datos = Estructura + Error
+- Datos = Cond. estructura media + estructura $Var/Cov$
+
+- **Punto de Partida: MODELO MÍNIMOS CUADRADOS ORDINARIOS - MCO**
+
+![Regresión estándar MCO](C:/Users/Portatil/Desktop/Spatial Econometrics using R/spatecon_images/imagen18.png){#id .class width=100% height=85%}
+
+$$
+y_i = \beta_0 + \beta_1 x_{1i} + \beta_2 x_{2i} + ... + \beta_k x_{ki} + \varepsilon_i
+$$
+
+- En notación matricial:
+
+$$
+\begin{equation*}
+  \begin{pmatrix}
+    y_1 \\
+    y_2 \\
+    . \\
+    y_n 
+  \end{pmatrix}
+  =
+  \begin{pmatrix}
+    1 + x_{11} + x_{21}+... + x_{k1} \\
+    1 + x_{12} + x_{22}+... + x_{k2} \\
+    ... \\
+    1 + x_{1n} + x_{2n}+... + x_{kn} 
+  \end{pmatrix}
+  \begin{pmatrix}
+    \beta_0 \\
+    \beta_1 \\
+    . \\
+    \beta_k 
+  \end{pmatrix}
+  +
+  \begin{pmatrix}
+    \varepsilon_1 \\
+    \varepsilon_2 \\
+    . \\
+    \varepsilon_n 
+  \end{pmatrix}
+  \end{equation*}
+$$
+
++ En notación más compacta se escribe como,
+
+$$
+\begin{gather*}
+\boldsymbol{y} = \boldsymbol{X}\boldsymbol{\beta} + \boldsymbol{\varepsilon}
+ \\
+Orden \\
+n \cdot 1= n \cdot (k+1) * (k+1) \cdot 1 + n\cdot1
+\end{gather*}
+$$
+
+**Los supuestos del modelo de regresión**
+
+- Estas condiciones están plasmadas en el teorema de Gauss-Markov.
+
+**El teorema de Gauss-Markov afirma que $\beta$ es un “mejor estimador lineal insesgado” siempre que:**
+
+- Los supuestos:
+
+	- Independencia media: $E[\varepsilon_i|x_i] = 0$ para todo $i$
+	- Homocedasticidad: $Var[\varepsilon_i|x_i] = \sigma^2$ para todo $i$
+	- Perturbaciones no correlacionadas: $Cov[\varepsilon_i ,\varepsilon_j ] = 0$ para todo $i \neq j$
+	- $X$ es no estocástico: $Cov[X’,\varepsilon] = 0$ para todo X
+
+- Otros que suelen incluirse:
+
+	- $y$ normalmente distribuida
+	- Linealidad
+	- Sin multicolinealidad
+	- $\varepsilon_i$ son normales (perturbación normal)
+
+- Se incumple el supuesto de errores Independientes e Identicamente Distribuidos - iid - en una especificación de regresión Mínimos Cuadrados Ordinarios (MCO) y la inferencia estadística no es válida.
+
+- Consecuencias de MCO sin tener en cuenta la estructura espacial,
+
+  - Los coeficientes MCO de regresión estimados están sesgados e inconsistentes.
+
+  - Los coeficientes MCO de regresión estimados son ineficientes.
+
+  - El $R^2$ es exagerado.
+
+  - Las inferencias no son correctas.
+
+```{r MCO, fig.cap="", results='show', warning=FALSE, message=FALSE, echo=TRUE}
+
+# En lo sucesivo, trabajamos con las siguientes transformaciones
+lograte= log(bg.df$Rate)
+
+# Se propone una regresión lineal múltiple con las siguientes variables
+reg_mco <- lm(lograte ~  mean_size + minor + elder
+           + ingresos_bajos + higher, data=bg.df)
+summary(reg_mco)
+
+reg_mco_res <- reg_mco$residuals
+
+#---------------------------------#
+# Diagnóstico de los residuales   #
+#---------------------------------#
+
+# A continuación examinamos los residuos
+me1 <- mean(residuals(reg_mco))
+me1    # Aprox. 0
+sd1 <- sd(residuals(reg_mco))
+sd1    # 0.2562
+summary(residuals(reg_mco))  # Simetría razonable
+
+hist(residuals(reg_mco),  breaks=seq(-2, 1, .2), col=8, probability=T,
+     ylab='Density', main='Histogram of Residuals(reg_mco)',
+     xlab='Residuals(reg_mco)')
+box()
+curve(dnorm(x, mean=me1, sd=sd1), from=-2, to=2, add=T,
+      col='red', lwd=2)
+
+# Hay señales de ouliers. Veamos el QQ-plot
+
+qqPlot(residuals(reg_mco), distribution="norm",
+       xlab='', main='Quantile Comparison Plot reg_mco residuals',
+       envelope=.95, las=0, pch=NA, lwd=2, col="red",
+       line="quartiles")
+par(new=TRUE)
+qqPlot(residuals(reg_mco), distribution="norm", envelope=FALSE,
+        pch=1, cex=1, col="black")
+par(new=FALSE)
+
+# Nuestra intuición se verifica con numerosas pruebas de normalidad univariada
+ad.test(residuals(reg_mco))       
+lillie.test(residuals(reg_mco))   
+pearson.test(residuals(reg_mco))  
+cvm.test(residuals(reg_mco))      
+sf.test(residuals(reg_mco))       
+shapiro.test(residuals(reg_mco)) 
+# No hay normalidad en los residuos
+
+# A partir del siguiente gráfico, estudiamos el supuesto de homocedasticidad
+plot(fitted(reg_mco), residuals(reg_mco), xlab="Fitted y", ylab= "Residuals",
+     main="Plot of Residuals against Fitted y")
+abline(h=0)
+
+# Usemos una prueba formal:
+bptest(reg_mco) # No se rechaza Ho (Homocedasticidad)
+
+#----------------------------------------------#
+# Se verifica la independencia de los residuos #
+#----------------------------------------------#
+
+# Test de Durbin-Watson para autocorrelación de los errores
+dwtest(reg_mco)
+
+
+# Véase la información de los pesos de la matriz
+names(attributes(bgQ1.gal))  # Nombres de los atributos
+card(bgQ1.gal$neighbours)    # Número de vecinos para cada observación
+range(card(bgQ1.gal$neighbours))  # Rango (número de vecinos)
+1/rev(range(card(bgQ1.gal$neighbours))) # Rango (pesos)
+summary(bgQ1.gal, zero.policy=T)   # Resumen
+
+moran.test(reg_mco$residuals, bgQ1.gal, alternative="two.sided", zero.policy=T)
+
+# Seleccionar la paleta
+colors <- brewer.pal(5, "YlOrBr")  
+color.cat.reg<-classIntervals(reg_mco$residuals, n=5, style="quantile", dataPrecision=2)
+colcode <- findColours(color.cat.reg, colors)
+
+## Figura
+par(mfrow=c(1,1))
+plot(bg_data[c("UTAM", "geometry")], col=colcode)
+title('Map of Regression Residuals')
+legend('topleft', legend=c(names(attr(colcode, 'table'))), fill=c(attr(colcode, 'palette')), 
+       title='Regression Residuals')
+
+moran.plot(reg_mco$residuals, bgQ1.gal, zero.policy=T, labels=as.character(bg.df$UTAM),
+           xlab=NULL, ylab=NULL, type="p", col="#AE017E",
+           cex=0.8, pch=1)
+```
+
+
+## Modelo espacial autorregresivo (SAR) - Spillovers o efectos derramamiento
+
+- Incorpora dependencia espacial agregando un "rezago espacial" a la variable dependiente en el lado derecho de la ecuación de regresión.
+
+- Trata la correlación espacial como un proceso o efecto de interés.
+	- Los valores de $y$ en un área están directamente influenciados por los valores de $y$ encontrados en áreas vecinas.
+	- Depende de cómo definimos el vecindario.
+
+![](C:/Users/Portatil/Desktop/Spatial Econometrics using R/spatecon_images/imagen15.png){#id .class width=30% height=30%}
+
+
+$$
+\boldsymbol{y}= \rho \boldsymbol{Wy} + \boldsymbol{X} \beta + \boldsymbol{\varepsilon} \\
+[\boldsymbol{I} - \boldsymbol{W}\rho]\boldsymbol{y} = \boldsymbol{X} \beta + \boldsymbol{\varepsilon}  \\
+\boldsymbol{y} = [\boldsymbol{I} - \boldsymbol{W}\rho]^{-1}\boldsymbol{X} \beta + [\boldsymbol{I} - \boldsymbol{W}\rho]^{-1}\boldsymbol{\varepsilon}
+$$
+
+
+- Efectos marginales son:
+
+
+$$
+\frac{\partial \boldsymbol{y}}{\partial \boldsymbol{X}} = [\boldsymbol{I} - \boldsymbol{W}\rho]^{-1}\boldsymbol{I}\beta 
+$$
+
+- De esta expresión se descompone el efecto en directo, total e indirecto.
+
+$$ \overline{M_{tot}}=n^{-1}i^{'}V(\boldsymbol{W})\beta i \\
+\overline{M_{dir}}=n^{-1}tr(V(\boldsymbol{W}))\beta \\
+\overline{M_{indir}}=\overline{M_{tot}}-\overline{M_{dir}}$$
+
+- Se estima por el método de Máxima Verosimilitud.
+
+
+```{r SAR, fig.cap="", results='show', warning=FALSE, message=FALSE, echo=TRUE}
+
+bg.lag.eig <- spatialreg::lagsarlm(lograte ~  mean_size + minor + elder
+                       + ingresos_bajos + higher,
+                       data=bg_data2, bgQ1.gal, method="eigen", quiet=FALSE)
+summary(bg.lag.eig)
+
+bg.lag.eig.imp <- impacts(bg.lag.eig, listw = bgQ1.gal, R = 999)
+summary(bg.lag.eig.imp, zstats = TRUE, short = TRUE)
+
+```
+
+
+## Modelo de error espacial (SEM) - Heterogeneidad espacial u omisión de variables
+
+- Examina la autocorrelación espacial entre los residuos de áreas adyacentes.
+
+- Trata la correlación espacial principalmente como un problema.
+	- Desestima la idea de que la correlación espacial pueda reflejar algún proceso significativo.
+	
+- El error espacial positivo puede reflejar:
+	- Un modelo mal especificado (particularmente una variable omitida que está espacialmente desordenada).
+	- Unidad espacial de agregación incorrecta.
+	
+![](C:/Users/Portatil/Desktop/Spatial Econometrics using R/spatecon_images/imagen16.png){#id .class width=30% height=30%}
+
+
+$$
+\boldsymbol{y}= \boldsymbol{X} \beta + \boldsymbol{u} \\
+$$
+
+$$
+\boldsymbol{u} = \lambda \boldsymbol{Wu} + \boldsymbol{\varepsilon}  \\
+\boldsymbol{u} = [\boldsymbol{I} - \boldsymbol{W}\lambda]^{-1}\boldsymbol{\varepsilon}
+$$
+
+- Reemplazo en estructural,
+
+$$
+\boldsymbol{y}= \boldsymbol{X} \beta + [\boldsymbol{I} - \boldsymbol{W}\lambda]^{-1}\boldsymbol{\varepsilon} \\
+$$
+
+- Efectos marginales son:
+
+
+$$
+\frac{\partial \boldsymbol{y}}{\partial \boldsymbol{X}} = \boldsymbol{I}\beta 
+$$
+
+- Se estima por el método de Máxima Verosimilitud.
+
+
+
+
+```{r SEM, fig.cap="", results='show', warning=FALSE, message=FALSE, echo=TRUE}
+
+bg.err.eig <- spatialreg::errorsarlm(lograte ~  mean_size + minor + elder
+                                     + ingresos_bajos + higher,
+                         data=bg_data2, bgQ1.gal, method="eigen", quiet=FALSE)
+summary(bg.err.eig)
+
+stargazer(reg_mco, bg.lag.eig, bg.err.eig, type = "html", title="Results", align=TRUE)
+```
+
+
+---
+
+# **Test de identificación del tipo de modelación espacial**
+
+## Elegir entre modelos: AIC y SC
+
+- AIC = -2L + 2k
+	- donde L es la log-verosimilitud y k es el número de parámetros del modelo.
+
+- SC = -2L + kln(N) (también conocido como BIC)
+	- donde N es el número de observaciones
+	
+## Comentarios técnicos
+
+Pasos para determinar el grado de autocorrelación espacial de los datos y ejecutar una regresión espacial:
+
+1. Elija un criterio de vecindad ¿Qué zonas están relacionadas?
+
+2. Asigne ponderaciones a las zonas que están vinculadas
+
+3. Crear una matriz de ponderaciones espaciales
+
+4. Ejecutar una prueba estadística para examinar la autocorrelación espacial
+
+5. Ejecutar una regresión MCO
+
+6. Determinar qué tipo de regresión espacial ejecutar
+
+7. Ejecutar una regresión espacial
+
+8. Aplicar la matriz de pesos
+
+
+```{r test LM, fig.cap="", results='show', warning=FALSE, message=FALSE, echo=TRUE}
+
+# Test de multiplicadores de Lagrange (i.e. GeoDa-style Lagrange multiplier tests)
+lm.LMtests(reg_mco, bgQ1.gal, test=c("LMerr", "LMlag", "RLMerr", "RLMlag"))
+
+# Veamos la comparación de la autocorrelación en los residuos
+moran.test(reg_mco$residuals, bgQ1.gal, alternative="two.sided")
+moran.test(bg.lag.eig$residuals, bgQ1.gal, alternative="two.sided")
+moran.test(bg.err.eig$residuals, bgQ1.gal, alternative="two.sided")
+
+# REVISAR CONCLUSIÓN: Lag, SARAR, & SDM all pretty good.  Error is OK.  The rest: not so much.
+
+# Veamos la comparación según los criterios de información
+AIC(reg_mco)       # 26.12001
+AIC(bg.lag.eig)    # 18.69224
+AIC(bg.err.eig)    # 25.15315
+
+BIC(reg_mco)       # 44.76408
+BIC(bg.lag.eig)    # 39.99975
+BIC(bg.err.eig)    # 46.46066
+
+# El modelo SARAR tiene el menor AIC, pero la diferencia
+# con el lag model y SDM no es significativa.
+```
+
+# **(OPCIONAL) Otros modelos: SLX y SAC**
+
+## Modelo de rezago Espacial de las X's (SLX)
+
+
+
+$$
+\boldsymbol{y}= \boldsymbol{X} \beta + \boldsymbol{WX} \theta + \boldsymbol{\varepsilon} \\
+$$
+
+```{r SLX, fig.cap="", results='show', warning=FALSE, message=FALSE, echo=TRUE}
+
+bg.slx.eig <- spatialreg::lmSLX(lograte ~  mean_size + minor + elder
+                                     + ingresos_bajos + higher,
+                         data=bg_data2, bgQ1.gal)
+summary(bg.slx.eig)
+
+```
+
+
+## Modelo Espacial Autorregresio combinado (SAC)
+
+$$
+\boldsymbol{y}= \rho \boldsymbol{Wy} + \boldsymbol{X} \beta + \boldsymbol{u} 
+$$
+
+$$
+\boldsymbol{u} = \lambda \boldsymbol{Wu} + \boldsymbol{\varepsilon}  
+$$
+
+```{r SAC, fig.cap="", results='show', warning=FALSE, message=FALSE, echo=TRUE}
+
+bg.lag.error <- spatialreg::sacsarlm(lograte ~  mean_size + minor + elder
+                         + ingresos_bajos + higher,
+                         data=bg_data2, bgQ1.gal, method = "eigen", quiet=FALSE)
+summary(bg.lag.error)
+
+bg.lag.error.imp <- impacts(bg.lag.error, listw = bgQ1.gal, R = 999)
+summary(bg.lag.error.imp, zstats = TRUE, short = TRUE)
+```
+
+```{r test todos, fig.cap="", results='show', warning=FALSE, message=FALSE, echo=TRUE}
+
+# Test de multiplicadores de Lagrange (i.e. GeoDa-style Lagrange multiplier tests)
+lm.LMtests(reg_mco, bgQ1.gal, test=c("LMerr", "LMlag", "RLMerr", "RLMlag", "SARMA"))
+
+# Veamos la comparación de la autocorrelación en los residuos
+moran.test(reg_mco$residuals, bgQ1.gal, alternative="two.sided")
+moran.test(bg.lag.eig$residuals, bgQ1.gal, alternative="two.sided")
+moran.test(bg.err.eig$residuals, bgQ1.gal, alternative="two.sided")
+moran.test(bg.slx.eig$residuals, bgQ1.gal, alternative="two.sided")
+moran.test(bg.lag.error$residuals, bgQ1.gal, alternative="two.sided")
+
+# Veamos la comparación según los criterios de información
+AIC(reg_mco)       # 26.12001
+AIC(bg.lag.eig)    # 18.69224
+AIC(bg.err.eig)    # 25.15315
+AIC(bg.slx.eig)    # 17.64841
+AIC(bg.lag.error)    # 14.12242
+
+BIC(reg_mco)       # 44.76408
+BIC(bg.lag.eig)    # 39.99975
+BIC(bg.err.eig)    # 46.46066
+BIC(bg.slx.eig)    # 49.60968
+BIC(bg.lag.error)    # 38.09337
+
+```
+
+
+
+**Hay mas**
+
+![](C:/Users/Portatil/Desktop/Spatial Econometrics using R/spatecon_images/imagen_modelos.png){#id .class width=60% height=65%}
+
+
+
+
+![](C:/Users/Portatil/Desktop/Spatial Econometrics using R/spatecon_images/imagen17.png){#id .class width=100% height=85%}
+
+
+
+Tipo de archivos necesarios:
+
+Archivo Shape, extensión .shp. Contiene la información espacial más los atributos. Significa que formarán parte otros ficheros como shx, .dbf, y .prj. Desarrollado por ESRI
+
+# Referencias 
+
+- Root, E. Class Notes. (2015). Introduction to Spatial Regression Analysis. ICPSR Summer Workshop 2015.
+
+- Dubé, J. , & Legros, D. (2014). Spatial econometrics using microdata.
+
+- LeSage, J. P. , & Pace, R. K. (2009). Introduction to spatial econometrics. Boca Raton: CRC Press.
+
+- Bivand, R. , E.J. Pebesma and V. Gomez-Rubio. (2013).  Applied Spatial Data Analysis with R. New York: Springer.
