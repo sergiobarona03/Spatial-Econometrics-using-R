@@ -16,7 +16,7 @@ output:
 institute:
 - Laboratorio de Economía Aplicada (LEA)
 - Pontificia Universidad Javeriana de Cali
-fontsize: 9 pt
+fontsize: 10 pt
 ---
 
 ```{r setup, include=FALSE}
@@ -28,36 +28,33 @@ knitr::knit_hooks$set(chunk = function(x, options) {
 })
 ```
 
-
 # Presentación del Curso
 
-- La dimensión espacial que es objeto de análisis en otras disciplinas, afecta también las variables socioeconómicas. Al integrar la distancia geográfica con la modelación econométrica, se puederen refinar las estimaciones y capturar efectos que antes no eran tenidos en cuenta.
+-   La dimensión espacial que es objeto de análisis en otras disciplinas, afecta también las variables socioeconómicas. Al integrar la distancia geográfica con la modelación econométrica, se pueden refinar las estimaciones y capturar efectos que antes no eran tenidos en cuenta.
 
 ## Objetivos del curso
 
-  1. Presentar por qué se considera que se debe tener en cuenta la distribución en el espacio para la modelación econométrica.
+1.  Presentar por qué se considera que se debe tener en cuenta la distribución en el espacio para la modelación econométrica.
 
-  2. Definir y construir una matriz de pesos espaciales.
+2.  Definir y construir una matriz de pesos espaciales.
 
-  3. Interpretar los resultados e índices que componen el análisis de modelación espacial.
+3.  Interpretar los resultados e índices que componen el análisis de modelación espacial.
 
-  4. Conocer algunos de los modelos más frecuentes para la modelación espacial (Modelos: SAR, SEM y otros).
+4.  Conocer algunos de los modelos más frecuentes para la modelación espacial (Modelos: SAR, SEM y otros).
 
-  5. Presentar cómo se identifica el tipo de modelación espacial.
-  
-  
+5.  Presentar cómo se identifica el tipo de modelación espacial.
+
 ## Metodología de aprendizaje
 
-- Metodología de aprendizaje-enseñanza: "Aprender haciendo"
+-   Metodología de aprendizaje-enseñanza: "Aprender haciendo"
 
-- Los datos analizados son de la encuestade origen-destino (EOD) para Bogotá del 2019.
+-   Los datos analizados son de la encuesta de origen-destino (EOD) para Bogotá del 2019.
 
-- Compartimos shape file y archivo de excel con atributos.
+-   Compartimos shape file y archivo de excel con atributos.
 
 ### Sugerencia:
 
-- Guarda los archivos y tu trabajo en 1 carpeta. 
-
+-   Guarda los archivos y tu trabajo en 1 carpeta.
 
 # Motivación del curso
 
@@ -65,203 +62,184 @@ knitr::knit_hooks$set(chunk = function(x, options) {
 ¿Por qué se considera que se debe tener en cuenta la distribución en el espacio para la modelación econométrica?
 \end{block}
 
-::: columns
+::::: columns
 ::: {.column width="50%"}
-
 **Dependencia espacial**
 
-i. Primera ley de Geografía de Tobler: “Todo está relacionado con todo lo demás, pero las cosas cercanas están más relacionadas que las distantes”. (1970: 236).
-	
+i.  Primera ley de Geografía de Tobler: “Todo está relacionado con todo lo demás, pero las cosas cercanas están más relacionadas que las distantes”. (1970: 236).
 :::
 
 ::: {.column width="50%"}
-
-![](C:/Users/Portatil/Desktop/Spatial Econometrics using R/spatecon_images/leyNewton.png){#id .class width=65% height=65%}
-
+![](C:/Users/danie/OneDrive/Escritorio/Spatial-Econometrics-using-R/spatecon_images/leyNewton.png){#id .class width="65%" height="65%"}
 :::
-:::
+:::::
 
 **Autocorrelación espacial**. Las áreas vecinas son similares (Tobler, 1970)
-	
-ii. Las áreas de observación son generalmente de diferentes tamaños. Heterogeneidad $\rightarrow$ Heterocedasticidad.
 
+ii. Las áreas de observación son generalmente de diferentes tamaños. Heterogeneidad $\rightarrow$ Heterocedasticidad.
 
 ## Motivación del curso (cont.)
 
-::: columns
+::::: columns
 ::: {.column width="50%"}
-
-
 \centering
-![](C:/Users/Portatil/Desktop/Spatial Econometrics using R/spatecon_images/mapa_bogota.png)
 
-
+![](C:/Users/danie/OneDrive/Escritorio/Spatial-Econometrics-using-R/spatecon_images/mapa_bogota.png)
 :::
 
 ::: {.column width="50%"}
-
-
 \centering
-![](C:/Users/Portatil/Desktop/Spatial Econometrics using R/spatecon_images/mapa_bogota_2.png)
 
-
-
+![](C:/Users/danie/OneDrive/Escritorio/Spatial-Econometrics-using-R/spatecon_images/mapa_bogota_2.png)
 :::
-:::
+:::::
 
 # Heterogeneidad espacial vs Autocorrelación Espacial
 
-- Los efectos espaciales son propiedades de los datos espaciales que dan como resultado la tendencia de que las observaciones espacialmente próximas de un atributo sean más parecidas que las observaciones más distantes (primera ley de Tobler). Esta agrupación (clustering) en el espacio puede resultar de:
-		
-	- Propiedades inherentes de algunas regiones en el área de estudio que hacen que las unidades analíticas dentro de ellas sean diferentes de las de otras regiones (_heterogeneidad espacial_) o
+-   Los efectos espaciales son propiedades de los datos espaciales que dan como resultado la tendencia de que las observaciones espacialmente próximas de un atributo sean más parecidas que las observaciones más distantes (primera ley de Tobler). Esta agrupación (clustering) en el espacio puede resultar de:
 
-	- Algún tipo de interacción espacialmente modelada entre unidades vecinas (_autocorrelación espacial_) o
+    -   Propiedades inherentes de algunas regiones en el área de estudio que hacen que las unidades analíticas dentro de ellas sean diferentes de las de otras regiones (*heterogeneidad espacial*) o
 
-	- Ambos.
+    -   Algún tipo de interacción espacialmente modelada entre unidades vecinas (*autocorrelación espacial*) o
 
-## Heterogeneidad espacial 
+    -   Ambos.
 
-- Tipificados por diferenciación de la unidad geográfica o proceso espacial que se expresa a lo largo de toda la unidad geográfica bajo estudio.
+## Heterogeneidad espacial
 
-- **No se asume ninguna interacción espacial** en el proceso que genera heterogeneidad espacial; se desprende de lo que hace única intrínsecamente de cada ubicación o propiedades compartidas por unidades vecinas.
+-   Tipificados por diferenciación de la unidad geográfica o proceso espacial que se expresa a lo largo de toda la unidad geográfica bajo estudio.
 
-- Distribución no uniforme de las observaciones en el espacio.
+-   **No se asume ninguna interacción espacial** en el proceso que genera heterogeneidad espacial; se desprende de lo que hace única intrínsecamente a cada ubicación o en propiedades compartidas.
 
-- Variación a gran escala de la media en las unidades espaciales unidades espaciales.
+-   Las observaciones no están distribuidas homogéneamente en el espacio.
 
-- Los valores de las variables no son independientes de su ubicación espacial.
+-   Variación a gran escala de la media en las unidades espaciales.
 
-- Resultado de la interacción de las características únicas de las unidades y su ubicación espacial.
+-    Los valores de las variables están influenciados por su ubicación en el espacio.
+
+-   Resultado de la interacción de las características únicas de las unidades y su ubicación espacial.
 
 ## Causas de la heterogeneidad espacial
 
-- Patrones de interacción social que crean características únicas de las unidades espaciales.
+-   Patrones de interacción social que crean características únicas de las unidades espaciales.
 
-	- Regímenes espaciales: legados de las relaciones regionales entre el centro y la periferia $\rightarrow$ diferencias entre unidades (población, PIB, etc.)
+    -   Regímenes espaciales: legados de las relaciones regionales entre el centro y la periferia $\rightarrow$ diferencias entre unidades (población, PIB, etc.)
 
-- Diferencias en las características físicas de las unidades espaciales. Tamaño y topografía diferentes.
+-   Diferencias en las características físicas de las unidades espaciales. Tamaño y topografía diferentes.
 
+-   *Si asumimos que la heterogeneidad espacial es un proceso razonable de generación de datos entonces ...*
 
-- *Si asumimos que la heterogeneidad espacial es un proceso razonable de generación de datos entonces ...*
+    -  La aparente agrupación de datos **no** se debe a interacción espacial entre áreas.  
+    - No hay influencias vecinas a pequeña escala ni efecto de contagio.  
+    - Un modelo de regresión con covariables adecuadas puede eliminar la autocorrelación residual.  
+    - Los efectos estructurales puramente espaciales pueden incorporarse en la especificación del modelo.  
 
-  - Estamos diciendo que la aparente agrupación de los datos no es el resultado de la interacción espacial entre áreas, no hay influencias vecinas de pequeña escala, no hay contagio.
+## Autocorrelación Espacial
 
-  - Suponemos que podemos especificar un modelo de regresión con covariables adecuadas de modo que la autocorrelación residual desaparezca.
+-   "… la existencia de una relación funcional entre lo que sucede en un punto del espacio y lo que sucede en otro lugar" (Anselin, 1988:11).
 
-  - Aceptamos que los efectos estructurales puramente espaciales pueden ser parte de la especificación de nuestro modelo.
+-   Esto significa una falta de independencia entre las observaciones (por definición); pero la “relación funcional” es la clave; interacción entre actores sociales/económicos.
 
-## Autocorrelación Espacial 
+-   En nuestros modelos, se expresa como un proceso espacial de corta distancia y localizado.
 
-- "… la existencia de una relación funcional entre lo que sucede en un punto del espacio y lo que sucede en otro lugar" (Anselin, 1988:11).
+-   Para el examen de datos en una red espacial irregular (por ejemplo, UTAM), este proceso espacial generalmente se maneja a través de la declaración exógena de un **“vecino”** (una región de influencia) definida para cada observación y se operacionaliza mediante una **“matriz de ponderaciones”.**
 
-- Esto significa una falta de independencia entre las observaciones (por definición); pero la “relación funcional” es la clave; interacción entre actores sociales/económicos.
-
-- Se expresa en nuestros modelos como un proceso espacial de pequeña escala, localizado y de corta distancia.
-
-- Para el examen de datos en una red espacial irregular (por ejemplo, UTAM), este proceso espacial generalmente se maneja a través de la declaración exógena de un **“vecino”** (una región de influencia) definida para cada observación y se operacionaliza mediante una **“matriz de ponderaciones”.**
-
-- Este proceso se desprende informalmente de la llamada “Primera Ley de la Geografía”; viola el supuesto de unidades de análisis independientes.
-
+-   Este proceso se desprende informalmente de la llamada “Primera Ley de la Geografía”; viola el supuesto de unidades de análisis independientes.
 
 ## Autocorrelación Espacial (Cont.)
 
-- *Si asumimos que la dependencia espacial es un proceso razonable de generación de datos entonces ...*
+-   *Si asumimos que la dependencia espacial es un proceso razonable de generación de datos entonces ...*
 
-  - Estamos diciendo que la agrupación de nuestros datos resulta de algún tipo de interacción espacial; existencia de influencias vecinas de pequeña escala; (definición de vecindario; elección de matriz de ponderaciones).
+    -   Estamos diciendo que la agrupación de nuestros datos resulta de algún tipo de interacción espacial; existencia de influencias vecinas de pequeña escala; (definición de vecindario; elección de matriz de ponderaciones).
 
-  - Creemos que podemos plantear teóricamente razones por las que la agrupación resulta de la interacción espacial o del contagio entre nuestras unidades de observación.
+    -   Creemos que podemos plantear teóricamente razones por las que la agrupación resulta de la interacción espacial o del contagio entre nuestras unidades de observación.
 
-  - Necesitamos pensar en qué tipo de modelo de dependencia debería introducir mejor los efectos vecinos; muchas opciones.
+    -   Necesitamos pensar en qué tipo de modelo de dependencia debería introducir mejor los efectos vecinos; muchas opciones.
 
-- Covariación localizada entre las medias (u otras estadísticas) dentro de la región.
+-   Covariación localizada entre las medias (u otras estadísticas) dentro de la región.
 
-- Tendencia de las medias a "seguirse" en el espacio.
+-   Tendencia de las medias a "seguirse" en el espacio.
 
-- Da lugar a grupos de valores similares.
+-   Da lugar a grupos de valores similares.
 
 ## Causas de la autocorrelación espacial
 
-- El proceso socioeconómico subyacente ha dado lugar a una distribución agrupada de los valores de las variables. Procesos de **agrupación**. 
-	
-- Agrupación de personas similares en zonas localizadas. Procesos de **interacción espacial**. 
-	
-- Las personas cercanas tienen más probabilidades de interactuar, compartir. Procesos de **difusión**.
-	
-- Los vecinos aprenden unos de otros. Procesos de **dispersión**.
-	
-- La gente se desplaza, pero suelen ser distancias cortas, se llevan consigo sus conocimientos. **Jerarquías espaciales.**
-	
-- Influencias económicas que unen a las personas. Desajuste entre el proceso y las unidades espaciales, distritos frente a zonas de comercio minorista o grupos de bloques censales frente a redes de barrios.
+-   El proceso socioeconómico subyacente ha dado lugar a una distribución agrupada de los valores de las variables. Procesos de **agrupación**.
 
-## Retos de la autocorrelación espacial
+-   Agrupación de personas similares en zonas localizadas. Procesos de **interacción espacial**.
 
-- Es un error interpretar correlaciones de grupos como correlaciones de individuos. Robinson, W.S. (1950). "Ecological Correlations and the Behavior of Individuals". American Sociological Review. Robinson → **“Falacia ecológica”**.
+-   Las personas cercanas tienen más probabilidades de interactuar, compartir. Procesos de **difusión**.
 
-- **Modifiable Analysis Unit Problem o MAUP (Problema de unidad de área modificable)**
-		- “Los usuarios habituales de correlaciones ecológicas saben que el tamaño del coeficiente depende en gran medida del número de subáreas. …[E]l tamaño de la correlación ecológica ...aumentará numéricamente a medida que se produzca la consolidación de áreas más pequeñas en áreas más grandes...”. (Robinson, págs. 357-8).
+-   Los vecinos aprenden unos de otros. Procesos de **dispersión**.
 
+-   La gente se desplaza, pero suelen ser distancias cortas, se llevan consigo sus conocimientos. **Jerarquías espaciales.**
+
+-   Influencias económicas que unen a las personas. Desajuste entre el proceso y las unidades espaciales, distritos frente a zonas de comercio minorista o grupos de bloques censales frente a redes de barrios.
+
+## Desafíos de la autocorrelación espacial
+
+-   No se deben interpretar correlaciones a nivel grupal como si fueran aplicables a nivel individual. Robinson, W.S. (1950). "Ecological Correlations and the Behavior of Individuals". American Sociological Review. Robinson → **“Falacia ecológica”**.
+
+-   **Modifiable Analysis Unit Problem o MAUP (Problema de la unidad de área modificable)** - “Los usuarios habituales de correlaciones ecológicas saben que el tamaño del coeficiente depende en gran medida del número de subáreas. …[E]l tamaño de la correlación ecológica ...aumentará numéricamente a medida que se produzca la consolidación de áreas más pequeñas en áreas más grandes...”. (Robinson, págs. 357-8).
 
 # Autocorrelación espacial: matriz de pesos
 
-- La matriz de pesos espaciales $W$ contiene las ponderaciones para cada unidad geográfica, con base en algún criterio de valoración. El insumo principal para su construcción es la matriz de **distancias**.
+-   La matriz de pesos espaciales $W$ contiene las ponderaciones para cada unidad geográfica, con base en algún criterio de valoración. El insumo principal para su construcción es la matriz de **distancias**.
 
-- La matriz de distancias calcula la cercanía entre las unidades espaciales analizadas. La medida de distancia más común es la distancia Euclidiana, pero no es la única.
+-   La matriz de distancias calcula la cercanía entre las unidades espaciales analizadas. La medida de distancia más común es la distancia Euclidiana, pero no es la única.
 
 ## Decisión 1: ¿Quién es vecino?
-
 
 Matriz criterio Reina, torre o alfil. Estos términos se explican por sí solos y se refieren a qué tipos de celdas adyacentes elegimos incluir como "vecinas".
 
 \centering
-![](C:/Users/Portatil/Desktop/Spatial Econometrics using R/spatecon_images/imagen6.png)
+
+![](C:/Users/danie/OneDrive/Escritorio/Spatial-Econometrics-using-R/spatecon_images/imagen6.png)
 
 Usando la matriz reina, para una distancia definida, la matriz $W$ se llena con ceros y unos para cumplir el criterio de cercanía.
 
 ## Matriz de contigüidad
 
-::: columns
+::::: columns
 ::: {.column width="50%"}
-
-- $W$ o “Matriz de contigüidad” – un término general que identifica vecinos con 1 y no vecinos con 0.
+-   $W$ o “Matriz de contigüidad” – un término general que identifica vecinos con 1 y no vecinos con 0.
 
 \centering
-![](C:/Users/Portatil/Desktop/Spatial Econometrics using R/spatecon_images/fig_mat_ones.png)
 
-- Luego se debe normalizar a la unidad por cada fila. **Matriz de ponderaciones**: reservaremos este término para referirnos a una matriz de contigüidad estandarizada por filas, con ponderaciones: 0 $\le$ $w_{ij}$ $\le$ 1
+![](C:/Users/danie/OneDrive/Escritorio/Spatial-Econometrics-using-R/spatecon_images/fig_mat_ones.png)
 
+-   Luego se debe normalizar a la unidad por cada fila. **Matriz de ponderaciones**: reservaremos este término para referirnos a una matriz de contigüidad estandarizada por filas, con ponderaciones: 0 $\le$ $w_{ij}$ $\le$ 1
 :::
 
 ::: {.column width="50%"}
-
-- Por lo tanto, se obtiene una matriz $W$ de dimensiones $N$ x $N$, en este caso $7$ x $7$, que será usada para "rezagar" espacialmente las variables de interés, de acuerdo al tipo de modelación.
+-   Por lo tanto, se obtiene una matriz $W$ de dimensiones $N$ x $N$, en este caso $7$ x $7$, que será usada para "rezagar" espacialmente las variables de interés, de acuerdo al tipo de modelación.
 
 \centering
-![](C:/Users/Portatil/Desktop/Spatial Econometrics using R/spatecon_images/fig_mat_wij.png)
 
-- Se han generado los elementos $wij$ basándose en la adyacencia.
+![](C:/Users/danie/OneDrive/Escritorio/Spatial-Econometrics-using-R/spatecon_images/fig_mat_wij.png)
 
+-   Se han generado los elementos $w_{ij}$ basándose en la adyacencia.
 :::
-:::
-
+:::::
 
 ## Otras opciones:
 
 -Hay muchas otras opciones; por ejemplo...
 
-	- Distancia y distancia inversa.
-	- k vecinos más cercanos (k nearests neighbors - knn). 
-	- Pesos de Cliff-Ord.
-	
-- La matriz de ponderaciones debe basarse en lo posible en la teoría.
+```         
+- Distancia y distancia inversa.
+- k vecinos más cercanos (k nearests neighbors - knn). 
+- Pesos de Cliff-Ord.
+```
 
-- Muchas opciones en R.
+-   La matriz de ponderaciones debe basarse en lo posible en la teoría.
 
-- Puede editar $W$ en un editor de texto general.
+-   Muchas opciones en R.
+
+-   Puede editar $W$ en un editor de texto general.
 
 # Aplicación: Caso de estudio
 
 ## Librerías en R:
-
 
 ## Datos:
 
@@ -269,19 +247,20 @@ Usando la matriz reina, para una distancia definida, la matriz $W$ se llena con 
 
 ## Medición de la autocorrelación espacial
 
-- Dos clases de pruebas de autocorrelación espacial:
+-   Dos clases de pruebas de autocorrelación espacial:
 
-- **Medidas de autocorrelación espacial global**
-	- Identifica si los datos en su conjunto presentan un patrón espacial
-	- ¿Existe "agrupación"?
-	
-- Medida más común: estadístico I de Moran (Alfred Pierce Moran (1950)).
+-   **Medidas de autocorrelación espacial global**
 
-- **Estadísticos de indicadores locales de asociación espacial (Local indicators of spatial association - LISA)**
+    -   Identifica si los datos en su conjunto presentan un patrón espacial
+    -   ¿Existe "agrupación"?
 
-	- Identifica qué unidades de observación de nuestro conjunto de datos están significativamente autocorrelacionadas espacialmente con las unidades vecinas.
+-   Medida más común: estadístico I de Moran (Alfred Pierce Moran (1950)).
 
-- La noción clave es medir que dos propiedades varían juntas. Cuánto importa la proximidad en los datos espaciales.
+-   **Estadísticos de indicadores locales de asociación espacial (Local indicators of spatial association - LISA)**
+
+    -   Identifica qué unidades de observación de nuestro conjunto de datos están significativamente autocorrelacionadas espacialmente con las unidades vecinas.
+
+-   La noción clave es medir que dos propiedades varían juntas. Cuánto importa la proximidad en los datos espaciales.
 
 ## I de Moran Global
 
@@ -306,48 +285,40 @@ Donde $w_{ij}$ son los elementos de la matrix de pesos o ponderaciones $W$.
 
 ## Autocorrelación espacial y aleatoriedad espacial
 
-- Aleatoriedad espacial
-	- Los valores observados en una ubicación no dependen de los valores observados en ubicaciones vecinas.
-	- El patrón espacial de valores observado es igual de probable que cualquier otro patrón espacial.
-	- La ubicación de los valores puede modificarse sin que ello afecte al contenido informativo de los datos.
-	
+-   Aleatoriedad espacial
+    -   Los valores observados en una ubicación no dependen de los valores observados en ubicaciones vecinas.
+    -   El patrón espacial de valores observado es igual de probable que cualquier otro patrón espacial.
+    -   La ubicación de los valores puede modificarse sin que ello afecte al contenido informativo de los datos.
+
 \centering
-	
-![](C:/Users/Portatil/Desktop/Spatial Econometrics using R/spatecon_images/imagen1.png){#id .class width=70% height=70%}
+
+![](C:/Users/danie/OneDrive/Escritorio/Spatial-Econometrics-using-R/spatecon_images/imagen1.png){#id .class width="70%" height="70%"}
 
 ## Autocorrelación espacial y aleatoriedad espacial (cont.)
 
-::: columns
+::::: columns
 ::: {.column width="50%"}
-
 Valor esperado de la I de Moran bajo la hipótesis de ausencia de autocorrelación espacial:
 
 $$E(I)= - 1/(n-1)$$
 
-$$ Var(I) = \frac{n^2S_1-nS_2+3S_0^{2}}{S_0^{2}(n^2-1)}-(E(I))^2$$
-Donde $S_0, S_1, S_2$ son expresiones definidas que dependen de $w_{ij}$.
-
-
+$$ Var(I) = \frac{n^2S_1-nS_2+3S_0^{2}}{S_0^{2}(n^2-1)}-(E(I))^2$$ Donde $S_0, S_1, S_2$ son expresiones definidas que dependen de $w_{ij}$.
 :::
 
 ::: {.column width="50%"}
-
-
 **Modifiable Analysis Unit Problem o MAUP (Problema de unidad de área modificable)**?.
 
 Las medidas de autocorrelación espacial dependen de la escala
 
 \centering
 
-![](C:/Users/Portatil/Desktop/Spatial Econometrics using R/spatecon_images/imagen10.png)
-
+![](C:/Users/danie/OneDrive/Escritorio/Spatial-Econometrics-using-R/spatecon_images/imagen10.png)
 :::
-:::
-
+:::::
 
 ## Inferencia
 
-- **Hipótesis nula**: Ausencia de autocorrelación espacial
+-   **Hipótesis nula**: Ausencia de autocorrelación espacial
 
 $$t=\frac{I - E(I)}{\sqrt{Var(I)}}$$
 
@@ -355,22 +326,21 @@ Si no puedo rechazar la hipótesis nula, entonces se debe modelar la autocorrela
 
 Un proceso no correlacionado tiene un I esperado = 0
 
-  - Valores > 0 indican autocorrelación espacial positiva.
-  - Valores < 0 indican autocorrelación espacial negativa.
-  
+-   Valores \> 0 indican autocorrelación espacial positiva.
+-   Valores \< 0 indican autocorrelación espacial negativa.
+
 ## Estadísticos de indicadores locales de asociación espacial (Local indicators of spatial association - **LISA**.
 
-- Medidas locales
-	- Valor calculado para cada observación; identificación de "puntos calientes" y "puntos fríos".
-
-- El estadístico local de Moran para unidad de área es:
+-   Medidas locales
+    -   Valor calculado para cada observación; identificación de "puntos calientes" y "puntos fríos".
+-   El estadístico local de Moran para unidad de área es:
 
 $$
 I_i =
 z_i\sum_{j = 1}^{n}w_{ij}z_j
 $$
 
-- Donde $z_i$ es una variable estandarizada
+-   Donde $z_i$ es una variable estandarizada
 
 $$
 z_i=
@@ -378,29 +348,25 @@ z_i=
 $$
 
 ## Diagrama de dispersión de Moran
-::: columns
+
+::::: columns
 ::: {.column width="50%"}
+-   **Ubicaciones de asociación espacial positiva.** ("Soy parecido a mis vecinos")
 
-* **Ubicaciones de asociación espacial positiva.**
-  ("Soy parecido a mis vecinos")
+-   $Q_1$ (valores [+], valores cercanos [+]): **H-H**
 
-- $Q_1$ (valores [+], valores cercanos [+]): **H-H**
-- $Q_3$ (valores [-], valores cercanos [-]): **L-L**
-  
-* **Ubicaciones de asociación espacial negativa.**
-  ("Soy diferente a mis vecinos")
+-   $Q_3$ (valores [-], valores cercanos [-]): **L-L**
 
-- $Q_2$ (valores [-], valores cercanos [+]): **L-H**
-- $Q_3$ (valores [+], valores cercanos [-]): **H-L**
-  
+-   **Ubicaciones de asociación espacial negativa.** ("Soy diferente a mis vecinos")
+
+-   $Q_2$ (valores [-], valores cercanos [+]): **L-H**
+
+-   $Q_3$ (valores [+], valores cercanos [-]): **H-L**
 :::
-  
+
 ::: {.column width="60%"}
-
-
 \centering
 
-![](C:/Users/Portatil/Desktop/Spatial Econometrics using R/spatecon_images/imagen12.png){#id .class width=70% height=70%}
-  
+![](C:/Users/danie/OneDrive/Escritorio/Spatial-Econometrics-using-R/spatecon_images/imagen12.png){#id .class width="70%" height="70%"}
 :::
-:::
+:::::
