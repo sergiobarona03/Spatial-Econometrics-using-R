@@ -7,7 +7,7 @@ library(tidyverse)
 library(sf)
 
 # Definir directorio de trabajo
-setwd("C:\\Users\\Portatil\\Desktop\\Spatial Econometrics using R\\")
+setwd("C:\\Users\\Portatil\\Desktop\\Spatial-Econometrics-using-R\\")
 
 ##---------------------------------------##
 ## Cargar datos a nivel de departamentos ##
@@ -138,9 +138,9 @@ colors_intervals <- c("< 200K" = "#1a9850",  # Verde
 
 map_n <- ggplot(data = dpto_merged) +
   geom_sf(aes(fill = n_cat), color = "black", size = 0.2) + 
-  scale_fill_manual(values = colors_intervals, name = "Tasa NBI (%)") + 
+  scale_fill_manual(values = colors_intervals, name = "N") + 
   theme_bw() + 
-  labs(title = "Distribución espacial de la población por Departamento (en % de NBI)",
+  labs(title = "Distribución espacial de la población por Departamento",
        caption = "Fuente: DANE. CNPV-2018.") +
   theme(axis.text = element_blank(),
         axis.ticks = element_blank(),
@@ -198,7 +198,7 @@ legend('topleft', legend=c(names(attr(colcode, 'table'))), fill=c(attr(colcode, 
 moran.plot(dpto_merged$tasa_nbi, nb2_dpto, 
            zero.policy=T, labels=as.character(dpto_merged$NOMBRE_DPT_clean),
            xlab=NULL, ylab=NULL, type="p", col="#AE017E",
-           cex=1.2, pch=1)
+           cex=0.8, pch=1)
 
 ##------------------------------##
 ## Estadísticos locales         ##

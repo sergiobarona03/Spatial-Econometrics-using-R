@@ -102,8 +102,6 @@ moran.test(mun_merged$tasa_nbi,
 ## Modelación de datos espaciales      ##
 ##-------------------------------------##
 
-
-
 # Logaritmo natural de la tasa
 mun_merged$tasa_nbi <- log(mun_merged$tasa_nbi)
 
@@ -139,7 +137,7 @@ car::qqPlot(residuals(reg_mco), distribution="norm",
        line="quartiles")
 
 par(new=TRUE)
-qqPlot(residuals(reg_mco), distribution="norm", envelope=FALSE,
+car::qqPlot(residuals(reg_mco), distribution="norm", envelope=FALSE,
        pch=1, cex=1, col="black")
 par(new=FALSE)
 
@@ -167,9 +165,6 @@ bptest(reg_mco) # No se rechaza Ho (Homocedasticidad)
 #----------------------------------------------#
 # Se verifica la independencia de los residuos #
 #----------------------------------------------#
-
-# Test de Durbin-Watson para autocorrelación de los errores
-dwtest(reg_mco)
 
 # Véase la información de los pesos de la matriz
 names(attributes(nb2_mun))  # Nombres de los atributos
