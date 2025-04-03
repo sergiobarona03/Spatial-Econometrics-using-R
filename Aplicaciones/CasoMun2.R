@@ -120,9 +120,9 @@ colors_intervals <- c("< 20K" = "#1a9850",  # Verde
 
 map_n <- ggplot(data = mun_merged) +
   geom_sf(aes(fill = n_cat), color = "black", size = 0.2) + 
-  scale_fill_manual(values = colors_intervals, name = "Tasa NBI (%)") + 
+  scale_fill_manual(values = colors_intervals, name = "N") + 
   theme_bw() + 
-  labs(title = "Distribución espacial de la población por Municipios (en % de NBI)",
+  labs(title = "Distribución espacial de la población por Municipios",
        caption = "Fuente: DANE. CNPV-2018.") +
   theme(axis.text = element_blank(),
         axis.ticks = element_blank(),

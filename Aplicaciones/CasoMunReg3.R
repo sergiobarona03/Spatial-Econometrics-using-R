@@ -173,7 +173,8 @@ range(card(nb2_mun$neighbours))  # Rango (número de vecinos)
 1/rev(range(card(nb2_mun$neighbours))) # Rango (pesos)
 summary(nb2_mun, zero.policy=T)   # Resumen
 
-moran.test(reg_mco$residuals, nb2_mun, alternative="two.sided", zero.policy=T)
+moran.test(reg_mco$residuals, 
+           nb2_mun, alternative="two.sided", zero.policy=T)
 
 # Seleccionar la paleta
 colors <- brewer.pal(5, "YlOrBr")  
@@ -187,6 +188,6 @@ title('Map of Regression Residuals')
 legend('topleft', legend=c(names(attr(colcode, 'table'))), fill=c(attr(colcode, 'palette')), 
        title='Regression Residuals')
 
-moran.plot(reg_mco$residuals, bgQ1.gal, zero.policy=T, labels=as.character(bg.df$UTAM),
+moran.plot(reg_mco$residuals, nb2_mun, zero.policy=T, labels=as.character(mun_merged$nom_mun),
            xlab=NULL, ylab=NULL, type="p", col="#AE017E",
            cex=0.8, pch=1)
