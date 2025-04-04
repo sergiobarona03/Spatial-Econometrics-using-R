@@ -7,12 +7,12 @@ author:
 - Mauricio Quiñones Domínguez, Ph.D. Política Pública \newline
 - Profesor Dpto. de Economía Universidad Javeriana Cali \newline
 - Diseño conjunto con \newline
-- Sergio Barona, M.Sc. Coordinador Laboratorio de Economía Aplicada - LEA \newline
+- Sergio Barona, Coordinador Laboratorio de Economía Aplicada - LEA \newline
 
 institute:
 - Universidad Javeriana Cali
 
-date: "FECHA POR DEFINIR"
+date: "29 y 30 de abril"
 output:
   html_document:
     toc: true
@@ -32,7 +32,7 @@ header-includes:
 
 # **Presentación del Curso**
 
-- La dimensión espacial que es objeto de análisis en otras disciplinas, afecta también las variables socioeconómicas. Al integrar la distancia geográfica con la modelación econométrica, se puederen refinar las estimaciones y capturar efectos que antes no eran tenidos en cuenta.
+- La dimensión espacial que es objeto de análisis en otras disciplinas, afecta también las variables socioeconómicas. Al integrar la distancia geográfica con la modelación econométrica, se pueden refinar las estimaciones y capturar efectos que antes no eran tenidos en cuenta.
 
 ## Objetivos del curso
 
@@ -50,7 +50,7 @@ header-includes:
 
 - Metodología de aprendizaje-enseñanza: "Aprender haciendo"
 
-- Los datos analizados son de la encuestade origen-destino (EOD) para Bogotá del 2019.
+- Los datos analizados son de la encuesta de origen-destino (EOD) para Bogotá del 2019.
 
 - Compartimos shape file y archivo de excel con atributos.
 
@@ -66,16 +66,16 @@ Sugerencia
 
 	i. Primera ley de Geografía de Tobler: “Todo está relacionado con todo lo demás, pero las cosas cercanas están más relacionadas que las distantes”. (1970: 236).
 	
-	- **Autocorrelación espacial**. Las áreas vecinas son similares. Tobler, W. R (1970). "A computer movie simulanting urban growth in the Detroit region." Economic Geography 46(2). 
+	- **Autocorrelación espacial**. Las áreas vecinas son similares. Tobler, W. R (1970). "A computer movie simulating urban growth in the Detroit region." Economic Geography 46(2). 
 	
 	ii. Las áreas de observación son generalmente de diferentes tamaños. Heterogeneidad $\rightarrow$ Heterocedasticidad.
 
-![](C:/Users/Portatil/Desktop/Spatial Econometrics using R/spatecon_images/leyNewton.png){#id .class width=65% height=65%}
+![](C:/Users/danie/OneDrive/Escritorio/Spatial-Econometrics-using-R/spatecon_images/leyNewton.png){#id .class width=65% height=65%}
 
 	
-![](C:/Users/Portatil/Desktop/Spatial Econometrics using R/spatecon_images/mapa_bogota.png){#id .class width=65% height=65%}
+![](C:/Users/danie/OneDrive/Escritorio/Spatial-Econometrics-using-R/spatecon_images/mapa_bogota.png){#id .class width=65% height=65%}
 
-![](C:/Users/Portatil/Desktop/Spatial Econometrics using R/spatecon_images/mapa_bogota_2.png){#id .class width=65% height=65%}
+![](C:/Users/danie/OneDrive/Escritorio/Spatial-Econometrics-using-R/spatecon_images/mapa_bogota_2.png){#id .class width=65% height=65%}
 
 ---
 
@@ -95,11 +95,11 @@ Sugerencia
 
 - **No se asume ninguna interacción espacial** en el proceso que genera heterogeneidad espacial; se desprende de lo que hace única intrínsecamente de cada ubicación o propiedades compartidas por unidades vecinas.
 
-- Distribución no uniforme de las observaciones en el espacio.
+- Las observaciones no están distribuidas homogéneamente en el espacio.
 
-- Variación a gran escala de la media en las unidades espaciales unidades espaciales.
+- Variación a gran escala de la media en las unidades espaciales.
 
-- Los valores de las variables no son independientes de su ubicación espacial.
+-  Los valores de las variables están influenciados por su ubicación en el espacio.
 
 - Resultado de la interacción de las características únicas de las unidades y su ubicación espacial.
 
@@ -163,11 +163,11 @@ Sugerencia
 	
 - Influencias económicas que unen a las personas. Desajuste entre el proceso y las unidades espaciales, distritos frente a zonas de comercio minorista o grupos de bloques censales frente a redes de barrios.
 
-**Retos**
+**Desafíos**
 
-- Es un error interpretar correlaciones de grupos como correlaciones de individuos. Robinson, W.S. (1950). "Ecological Correlations and the Behavior of Individuals". American Sociological Review. Robinson → **“Falacia ecológica”**.
+- No se deben interpretar correlaciones a nivel grupal como si fueran aplicables a nivel individual. Robinson, W.S. (1950). "Ecological Correlations and the Behavior of Individuals". American Sociological Review. Robinson → **“Falacia ecológica”**.
 
-- **Modifiable Analysis Unit Problem o MAUP (Problema de unidad de área modificable)**
+- **Modifiable Analysis Unit Problem o MAUP (Problema de la unidad de área modificable)**
 		- “Los usuarios habituales de correlaciones ecológicas saben que el tamaño del coeficiente depende en gran medida del número de subáreas. …[E]l tamaño de la correlación ecológica ...aumentará numéricamente a medida que se produzca la consolidación de áreas más pequeñas en áreas más grandes...”. (Robinson, págs. 357-8).
 
 ---
@@ -182,27 +182,27 @@ Sugerencia
 
 - Matriz criterio Reina, torre o alfil. Estos términos se explican por sí solos y se refieren a qué tipos de celdas adyacentes elegimos incluir como "vecinas".
 
-![](C:/Users/Portatil/Desktop/Spatial Econometrics using R/spatecon_images/imagen6.png){#id .class width=100% height=85%}
+![](C:/Users/danie/OneDrive/Escritorio/Spatial-Econometrics-using-R/spatecon_images/imagen6.png){#id .class width=100% height=85%}
 
 - Usando la matriz reina, para una distancia definida, la matriz $W$ se llena con ceros y unos para cumplir el criterio de cercanía.
 
 - $W$ o “Matriz de contigüidad” – un término general que identifica vecinos con 1 y no vecinos con 0.
 
-![](C:/Users/Portatil/Desktop/Spatial Econometrics using R/spatecon_images/fig_mat_ones.png){#id .class width=70% height=70%}
+![](C:/Users/danie/OneDrive/Escritorio/Spatial-Econometrics-using-R/spatecon_images/fig_mat_ones.png){#id .class width=70% height=70%}
 
 - Luego se debe normalizar a la unidad por cada fila. Es una matriz no-negativa donde la suma por fila es igual a uno.
 
 - “Matriz de ponderaciones”: casi siempre reservaremos este término para referirnos a una matriz de contigüidad estandarizada por filas, con ponderaciones: 0 $\le$ $w_{ij}$ $\le$ 1
 
-![](C:/Users/Portatil/Desktop/Spatial Econometrics using R/spatecon_images/fig_mat_w.png){#id .class width=70% height=70%}
+![](C:/Users/danie/OneDrive/Escritorio/Spatial-Econometrics-using-R/spatecon_images/fig_mat_w.png){#id .class width=70% height=70%}
 
 - Por lo tanto, se obtiene una matriz $W$ de dimensiones $N$ x $N$, en este caso $7$ x $7$, que será usada para "rezagar" espacialmente las variables de interés, de acuerdo al tipo de modelación.
 
-![](C:/Users/Portatil/Desktop/Spatial Econometrics using R/spatecon_images/fig_mat_wij.png){#id .class width=70% height=70%}
+![](C:/Users/danie/OneDrive/Escritorio/Spatial-Econometrics-using-R/spatecon_images/fig_mat_wij.png){#id .class width=70% height=70%}
 
 - Hay muchas variedades de matrices de pesos.
 
-- Se han generado los elementos $wij$ basándose en la adyacencia.
+- Se han generado los elementos $w_{ij}$ basándose en la adyacencia.
 
 - Hay muchas otras opciones; por ejemplo...
 	- Distancia y distancia inversa.
@@ -349,7 +349,7 @@ $$
 	- El patrón espacial de valores observado es igual de probable que cualquier otro patrón espacial.
 	- La ubicación de los valores puede modificarse sin que ello afecte al contenido informativo de los datos.
 	
-![](C:/Users/Portatil/Desktop/Spatial Econometrics using R/spatecon_images/imagen1.png){#id .class width=70% height=70%}
+![](C:/Users/danie/OneDrive/Escritorio/Spatial-Econometrics-using-R/spatecon_images/imagen1.png){#id .class width=70% height=70%}
 
 
 - Valor esperado de la I de Moran bajo la hipótesis de ausencia de autocorrelación espacial:
@@ -375,7 +375,7 @@ $$t=\frac{I - E(I)}{\sqrt{Var(I)}}$$
 - Recuerdan **Modifiable Analysis Unit Problem o MAUP (Problema de unidad de área modificable)**?.
 
 Las medidas de autocorrelación espacial dependen de la escala
-![](C:/Users/Portatil/Desktop/Spatial Econometrics using R/spatecon_images/imagen10.png){#id .class width=70% height=70%}
+![](C:/Users/danie/OneDrive/Escritorio/Spatial-Econometrics-using-R/spatecon_images/imagen10.png){#id .class width=70% height=70%}
 
 ### **Ejercicio con la Encuesta Origen-Destino (EOD) de Bogotá año 2019**
 
@@ -456,7 +456,7 @@ moran.plot(bg.df$Rate, bgQ1.gal, zero.policy=T, labels=as.character(bg.df$UTAM),
 
 --- 
 
-![](C:/Users/Portatil/Desktop/Spatial Econometrics using R/spatecon_images/imagen12.png){#id .class width=70% height=70%}
+![](C:/Users/danie/OneDrive/Escritorio/Spatial-Econometrics-using-R/spatecon_images/imagen12.png){#id .class width=70% height=70%}
 
 
 ---
@@ -500,7 +500,7 @@ moran.plot(bg.df$Rate, bgQ1.gal, zero.policy=T, labels=as.character(bg.df$UTAM),
 
 - **Punto de Partida: MODELO MÍNIMOS CUADRADOS ORDINARIOS - MCO**
 
-![Regresión estándar MCO](C:/Users/Portatil/Desktop/Spatial Econometrics using R/spatecon_images/imagen18.png){#id .class width=100% height=85%}
+![Regresión estándar MCO](C:/Users/danie/OneDrive/Escritorio/Spatial-Econometrics-using-R/spatecon_images/imagen18.png){#id .class width=100% height=85%}
 
 $$
 y_i = \beta_0 + \beta_1 x_{1i} + \beta_2 x_{2i} + ... + \beta_k x_{ki} + \varepsilon_i
@@ -683,7 +683,7 @@ moran.plot(reg_mco$residuals, bgQ1.gal, zero.policy=T, labels=as.character(bg.df
 	- Los valores de $y$ en un área están directamente influenciados por los valores de $y$ encontrados en áreas vecinas.
 	- Depende de cómo definimos el vecindario.
 
-![](C:/Users/Portatil/Desktop/Spatial Econometrics using R/spatecon_images/imagen15.png){#id .class width=30% height=30%}
+![](C:/Users/danie/OneDrive/Escritorio/Spatial-Econometrics-using-R/spatecon_images/imagen15.png){#id .class width=30% height=30%}
 
 
 $$
@@ -702,9 +702,11 @@ $$
 
 - De esta expresión se descompone el efecto en directo, total e indirecto.
 
-$$ \overline{M_{tot}}=n^{-1}i^{'}V(\boldsymbol{W})\beta i \\
+$$ 
+\overline{M_{tot}}=n^{-1}i^{'}V(\boldsymbol{W})\beta i \\
 \overline{M_{dir}}=n^{-1}tr(V(\boldsymbol{W}))\beta \\
-\overline{M_{indir}}=\overline{M_{tot}}-\overline{M_{dir}}$$
+\overline{M_{indir}}=\overline{M_{tot}}-\overline{M_{dir}}
+$$
 
 - Se estima por el método de Máxima Verosimilitud.
 
@@ -733,7 +735,7 @@ summary(bg.lag.eig.imp, zstats = TRUE, short = TRUE)
 	- Un modelo mal especificado (particularmente una variable omitida que está espacialmente desordenada).
 	- Unidad espacial de agregación incorrecta.
 	
-![](C:/Users/Portatil/Desktop/Spatial Econometrics using R/spatecon_images/imagen16.png){#id .class width=30% height=30%}
+![](C:/Users/danie/OneDrive/Escritorio/Spatial-Econometrics-using-R/spatecon_images/imagen16.png){#id .class width=30% height=30%}
 
 
 $$
@@ -759,9 +761,6 @@ $$
 $$
 
 - Se estima por el método de Máxima Verosimilitud.
-
-
-
 
 ```{r SEM, fig.cap="", results='show', warning=FALSE, message=FALSE, echo=TRUE}
 
@@ -852,7 +851,7 @@ summary(bg.slx.eig)
 ```
 
 
-## Modelo Espacial Autorregresio combinado (SAC)
+## Modelo Espacial Autorregresión combinado (SAC)
 
 $$
 \boldsymbol{y}= \rho \boldsymbol{Wy} + \boldsymbol{X} \beta + \boldsymbol{u} 
@@ -904,12 +903,12 @@ BIC(bg.lag.error)    # 38.09337
 
 **Hay mas**
 
-![](C:/Users/Portatil/Desktop/Spatial Econometrics using R/spatecon_images/imagen_modelos.png){#id .class width=60% height=65%}
+![](C:/Users/danie/OneDrive/Escritorio/Spatial-Econometrics-using-R/spatecon_images/imagen_modelos.png){#id .class width=60% height=65%}
 
 
 
 
-![](C:/Users/Portatil/Desktop/Spatial Econometrics using R/spatecon_images/imagen17.png){#id .class width=100% height=85%}
+![](C:/Users/danie/OneDrive/Escritorio/Spatial-Econometrics-using-R/spatecon_images/imagen17.png){#id .class width=100% height=85%}
 
 
 

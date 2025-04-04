@@ -1,18 +1,26 @@
 ---
-title: 'Introducción al Análisis Exploratorio de Datos (EDA) en R'
-subtitle: 'Módulo 1'
-fontsize: 8 pt
+title: "Introducción al análisis espacial de datos socioeconómicos usando R"
+subtitle: Módulo 2 
+author:
+- Mauricio Quiñones Domínguez  \newline
+- Ph.D. Política Pública \newline
+- Profesor Dpto. de Economía y Finanzas \newline
+date: '2025-04-30'
 output:
   beamer_presentation:
-    theme: "Berlin"
-    fonttheme: "structurebold"
+    theme: Berlin
+    fonttheme: structurebold
     slide_level: 2
-    toc: true
-date: "2024-03-16"
+    toc: yes
+  ioslides_presentation: default
+institute:
+- Laboratorio de Economía Aplicada (LEA)
+- Pontificia Universidad Javeriana de Cali
+fontsize: 8 pt
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = FALSE)
+knitr::opts_chunk$set(echo = TRUE)
 def.chunk.hook  <- knitr::knit_hooks$get("chunk")
 knitr::knit_hooks$set(chunk = function(x, options) {
   x <- def.chunk.hook(x, options)
@@ -20,513 +28,215 @@ knitr::knit_hooks$set(chunk = function(x, options) {
 })
 ```
 
+# Análisis exploratorio de datos espaciales
 
-# R y RStudio
+El análisis de datos espaciales conduce a la estadística espacial. Estos son los tipos de datos espaciales
 
-## El entorno R
+- Datos de eventos (datos de puntos).
+- Datos espacialmente continuos (datos geoestadísticos).
+- Datos de regionalizados.
+- Datos de interacción espacial (datos de flujo).
 
-R es un entorno de programación para el análisis de datos y gráficos (R Core Team, 2000). Algunas características de R son las siguientes:
+---
+## Estos tipos de datos no son categorías estrictas ni mutuamente exclusivas.
 
--   Permite el almacenamiento y la manipulación de datos.
--   Incluye una amplia colección integrada de herramientas para el análisis de datos.
--   Dispone de un lenuaje de programación interpretado, simple y efectivo que incluye condicionales, ciclos, funciones recursivas, etc. (Muchas de las funciones suministradas en el Sistema están escritas en lenguaje R).
--   La funcionalidad de R consiste en paquetes modulares.
+- Cartografía y visualización - Histogramas, mapas de valores atípicos, diagramas de caja.
+- Índices de asociación espacial / autocorrelación espacial.
+- Análisis de patrones puntuales.
+- El objetivo es buscar una buena comprensión y descripción de los datos, sugiriendo así hipótesis para explorar.
+- Busque especialmente pistas sobre la "heterogeneidad espacial" o la "dependencia espacial".
+- Pocas suposiciones a priori sobre los datos.
+- Nuestro objetivo es modelar y extraer inferencias adecuadas sobre un proceso generador de datos aleatorio y no observado.
 
-## ¿Por qué R?
+# Modelos más frecuentes para la modelación espacial 
 
-R tiene las siguientes ventajas:
+### ¿El objetivo es ...?
 
--   R es un software libre
--   R es multiplataforma
--   R tiene una **sofisticada capacidad para hacer gráficos**, incluyendo paquetes gráficos especializados.
--   R tiene librerías que cubre un amplio rango de la metodologías de la estadística y las matemáticas (series temporales, optimización matemática, inferencia estadística, etc.)
--   Existe una comunidad activa que ha promovido el incremento en su número de usuarios ([\textcolor{cyan}{The R Project}](https://www.r-project.org/), [\textcolor{cyan}{R Contributor Site}](https://contributor.r-project.org/slack), [\textcolor{cyan}{RStudio Community}](https://community.rstudio.com/) y [\textcolor{cyan}{R Bloggers}](http://www.r-bloggers.com)).
+- Generalmente deseamos comprender (modelar) los aspectos estructurados de nuestros datos, dejando atrás un vector de ruido aleatorio.
+- Datos = Estructura + Error
+- Datos = Cond. estructura media + estructura $Var/Cov$
 
-## R y RStudio
+## Punto de Partida: Modelo Mínimos Cuadrados Ordinarios (MCO)
 
-::: columns
-::: {.column width="50%"}
-
-\bigskip
-
-RStudio es un \textbf{IDE (Integrated Development Environment)} para el lenguaje de programación R.
-
-\bigskip
-
-Para instalar R: \textcolor{cyan}{https://cran.r-project.org/}
-
-\bigskip
-
-Para instalar RStudio: \textcolor{cyan}{http://www.rstudio.com/download}
-
-\bigskip
-
-RStudio facilita el trabajo con R a través de una interfaz que es común a Windows, Mac OS y Linux.
-:::
-
-::: {.column width="25%"}
-
-![Caption for the picture.](Figuras/R.jpg)\
-
-\bigskip
-
-\bigskip
-
-![Caption for the picture.](Figuras/RStudio.png)\
-:::
-:::
-
-# Elementos básicos de R
-
-## Estructuras de datos en R
-
-En lo sucesivo, nos concentraremos en las estructuras de datos representadas en la **Figura 1**. (La figura omite los arreglos, `array()`, que es el resultado de aumenta la dimensión de una matriz).
-
-![Estructuras principales de datos en R](Figuras/Estructures.png){width="75%"}
-
-
-
-## Tipos de vectores
-
-::: columns
-::: {.column width="60%"}
-
-\bigskip
-
-\bigskip
-
-La función `class()` permite recuperar alguna de las siguientes clases
-
--   Cadena de caracteres
--   Numérico (*double*)
--   Entera
--   Lógico
-:::
-  
-::: {.column width="40%"}
-![Clases de vectores](Figuras/Clases.png)
-:::
-:::
-  
-## Vectores
-  
-::: columns
-::: {.column width="60%"}
-El **operador de asignación** `<-` es usado para asignar un nombre al objeto. Para definir vectores:
-  
-```{r, echo=TRUE, eval = T}
-v1 <- c("a", "b", "c")
-v1
-```
-
-Para seleccionar el elemento $i$:
-  
-```{r, echo=TRUE, eval = T}
-v1[3]
-```
-
-Recuerde que
-
--   `length()`muestra la longitud
--   `typeof()`muestra el tipo de vector
--   `names()` nombra los elementos
--   R usa **ejecución por elementos**
-:::
-  
-::: {.column width="40%"}
-![Ejemplos de ejecución por elementos](Figuras/Vectores.png)
-:::
-:::
-  
-  
-  
-## Matrices
-  
-::: columns
-::: {.column width="60%"}
-Una matriz se define usando `matrix()`. El parámetro `byrow` determina si las entradas son completadas por filas (`TRUE`) o columnas (`FALSE`). Así
-
-```{r, echo=TRUE, eval = T}
-m1 <- matrix(c(1,2,3,5), nrow = 2, ncol = 2, byrow = T)
-m1
-```
-
-Las entradas son seleccionadas con `[i, j]`:
-  
-```{r, echo=TRUE, eval = F}
-m1[2,2] # Fila 2 y columna 2
-m1[2,]  # Fila 2
-m1[ ,2] # Columna 2
-```
-
-:::
-  
-::: {.column width="40%"}
-![Uso de índices en matrices](Figuras/Matrices.png)
-
-:::
-:::
-
-**Funciones importantes:** `rbind` (permite agregar filas), `cbind` (permite agregar columnas, `dim` (proporciona las dimensiones), `diag` extrae elementos de la diagonal, `nrow` y `ncol()` (proporciona el no. de filas y columnas, respectivamente)
-
-## Nota: operaciones con matrices
-  
-::: columns
-::: {.column width="50%"}
-
-\bigskip
-
-\bigskip
-
-A diferencia de la ejecución por elemento `a*b`, el producto de matrices se obtiene de
-
-```{r, echo=TRUE, eval = T}
-m1 %*% t(m1) # m1 por su traspuesta
-```
-
-La **Figura 5** muestra otras operaciones útiles usando matrices.
-
-:::
-  
-::: {.column width="50%"}
-![Operaciones con matrices](Tablas/Operaciones_matrices.png)
-:::
-:::
-  
-## Data frames
-  
-Los data frames son estructuras rectangulares de datos que pueden contener objetos de diferente tipo (cadena, numéricos, lógicos, etc.). Creamos un data frame con tres columnas (*id*, *sexo* y *edad*):
-  
-```{r, echo=T, eval=T}
-id = 1:4
-sexo = factor(c("male", "male", "female", "female"))
-edad = c(15, 26, 43, 56)
-df = data.frame(id, sexo, edad)
-df
-```
-
-Al igual que una matriz, se seleccionan sus entradas usando `[i,j]`. También:
-  
-  
-```{r, echo=T, eval=F}
-df$edad              # seleccionar variable edad
-df$edad[1]           # primer elemento de edad
-df[c("id", "edad")]  # seleccionar las variables id y edad
-```
-
-Para verificar los nombres de las variables usamos `colnames()`. 
-
-## Listas
-
-::: columns
-::: {.column width="50%"}
-Las listas son estructuras heterogéneas de datos. Aunque son estructuras unidimensionales, las listas permiten almacenar objetos de distinta clase (vectores, matrices, data frames, otras listas). Así:
-  
-  
-```{r, echo=TRUE, eval = T}
-lista <- list(vector1 = v1, 
-              matriz = m1, dataframe = df)
-lista
-```
-
-
-:::
-  
-::: {.column width="50%"}
-
-\bigskip
-
-\bigskip
-
-![Uso de índices en listas](Figuras/Listas.png)
-:::
-:::
-  
-  
-## Condicionales
-  
-::: columns
-::: {.column width="50%"}
-
-\bigskip
-
-\bigskip
-
-Usando condicionales, una operación es ejecutada si la condición se cumple (`TRUE`); de otro modo (`ELSE`), establece la operación que es ejecutada si la condición no se cumple (`FALSE`). La estructura general es la siguiente:
-  
-  
-```{r, echo=TRUE, eval = F}
-if (condition) {
-  # Ejecutado cuando la condición es verdadera
-} else {
-  # Ejecutado cuando la condición es falsa
-}
-```
-
-
-:::
-  
-::: {.column width="50%"}
-![Descripción de operadores](Tablas/Operadores.png)
-:::
-:::
-  
-## Funciones
-  
-En general, la estructura de una función es la siguiente:
-
-```{r, echo=TRUE, eval = F}
-function(arg_1 = x1, arg_2 = x2, ..., arg_n = xn)
-```
-
-A partir de `function()`, se pueden crear funciones con base en la siguiente estructura:
-  
-```{r, echo=TRUE, eval = F}
-my_function = function(args){
-  #statement
-  #statement
-  #statemente
-  return(y)
-}
-```
-
-Cuando se usan funciones definidas en una librería, se pueden conocer los detalles de los argumentos y la salida de la funciones con los comandos `??`y `help()`. 
-
-## Ejercicio 
-
-\begin{enumerate}
-
-\item{Crear una matriz partir de tres vectores (una cadena y dos numéricos). Convertir la matriz en data frame y seleccionar el elemento (2, 3)}
-
-\item{Crear una función que, si la entrada es un vector numérico, la salida sea la media, la mediana, el percentil 25 y 75. (Para la salida use una lista). }
-
-\end{enumerate}
-
-
-# Herramientas para la manipulación de datos
-
-## Paquetes en R
-
-Los paquetes en R son colecciones de funciones, datos y documentación cuyo objetivo es  extender las capacidades básicas de R. **CRAN** (The Comprehensive R Archive Network) es una red de servidores que almacenan versiones de R, así como librerías en R que cumplen las políticas del repositorio \textcolor{cyan}{(CRAN, 2022)}.
-
-Para instalar paquetes del repositorio **CRAN**:
-  
-```{r, echo=TRUE, eval = F}
-install.packages(“dplyr”)
-```
-
-Después de instalar el paquete, se debe cargar la librería:
-
-```{r, echo=TRUE, eval = F}
-library(dplyr)
-```
-
-Para encontrar la documentación del paquete:
-  
-```{r, echo=TRUE, eval = F}
-help(dplyr)
-```
-
-## Tidyverse
-
-::: columns
-::: {.column width="50%"}
-
-\bigskip
-
-\bigskip
-
-\bigskip
-
-**Tidyverse** es un conjunto de librerías en R diseñadas para el análisis de datos (importar, transforma, visualizar y modelar con datos) (Wickham, 2019).
-
-\bigskip
-
-Nos concentraremos en las siguientes librerías:
-  
-- dplyr
-- ggplot2
-- forcats*
-  
-:::
-  
-::: {.column width="50%"}
-![Librerías en Tidyverse](Figuras/Tidyverse.png)
-:::
-:::
-  
-## Importar datos
-  
-El primer paso es definir el directorio de trabajo:
-  
-```{r, echo=TRUE, eval=F}
-setwd("path")
-```
-
-Nos concentraremos en funciones para importar los siguientes formatos de datos
-\begin{table}[ht]
 \centering
-\resizebox{11cm}{!}{
-  \begin{tabular}{|*{4}{c|}}
-  \hline
-  \textbf{Formato} & \textbf{Formato específico}  & \textbf{Función} & \textbf{Paquete}  \\
-  \hline
-  Texto o tabulares & CSV   &  read\_csv()        & readr \\  
-  \cline{2-4}
-  &      Otros formatos de texto    &  read\_delim()   &        readr              \\ 
-  \hline
-  Formatos de otros programas           &  Excel         & read\_excel()           &  readxl   \\ 
-  \cline{2-4}
-  & SPSS   &  read\_sav()         &  haven                   \\  
-  \cline{2-4}
-  & STATA          &  read\_dta()         & haven                     \\  
-  \cline{2-4}
-  & SAS          &  read\_sas()         &   haven                   \\
-  \hline
-  
-  Formatos propios de R          &  .rda         & load()           &  base   \\ 
-  \cline{2-4}
-  & .rds   &  readRDS()         &    base                 \\  
-  \hline
-  \hline
-  \end{tabular}
-}
-\label{tab:multicol}
-\end{table}
 
-## Pipe (%>%)
+![Regresión estándar MCO](C:/Users/danie/OneDrive/Escritorio/Spatial-Econometrics-using-R/spatecon_images/imagen18.png){width="100%" height="85%"}
 
-La tubería de comando o *pipeline* (`%>%`) es una herramienta utilizada para el encadenamiento de funciones. El operador nos permite escribir una secuencia de operaciones
+## MCO (cont.)
 
-Una secuencia en su **forma estándar** sigue la forma
-
-```{r, echo=TRUE, eval=F}
-dataset_2 <- dplyr::filter(dataset, attend > 15 & attend != 20)
-
-```
-
-En **forma encadenada**:
-
-```{r, echo=TRUE, eval=F}
-dataset_2 <- dataset %>% dplyr::filter(attend > 15 & attend != 20)
-```
-
-El siguiente atajo es útil: ![Caption for the picture.](Figuras/Atajo.jpg){width=110}\
-
-## Dplyr
-
-El paquete **dplyr** proporciona una sintaxis para la manipulación de datos. (El operador `%>%` pertenece a la sintaxis de dplyr). Nos concentraremos en las siguientes funciones:
-  
-![Algunas funciones en el paquete dplyr](Figuras/Dplyr.png){width=300}
-
-## Resumen por grupo
-
-::: columns
-::: {.column width="50%"}
-
-\bigskip
-
-Usando las funciones `summarize()` y `group_by()`, obtenemos un resumen descriptivo de la base de datos diferenciado según una o más variables de control. Por ejemplo:
-  
-```{r, echo=TRUE, eval=F}
-# Resumen general
-table_1 <- new_dataset %>% filter(Int_attend == "Group 4")
-%>%   summarize(MeanAttend = mean(attend),SdAttend = sd(attend)) 
-```
-
-```{r, echo=TRUE, eval=F}
-# Resumen diferenciado
-table_2 <- new_dataset %>% group_by(Int_attend) %>%
-  summarize(MeanAttend = mean(attend), SdAttend = sd(attend))
-```
-
-La **Figura 10** muestra el funcionamiento de `summarize()` y `group_by()`.
-
-:::
-  
-::: {.column width="46%"}
-![Caption for the picture.](Figuras/Group_summary.png)
-:::
-:::
-  
-## ggplot2
-  
-El paquete **ggplot2** proporciona un sistema coherente para visualizar datos y crear gráficos. La versatilidad de **ggplot2** radica en el uso de la Gramática de Gráficos (*Grammar of Graphics*).
-
-```{r, eval =F, echo=T}
-ggplot(dataset, aes()) + geometría + faceta + opciones
-```
-
-donde:
-  
-\begin{enumerate}
-
-\item{\textit{dataset} es un data frame}
-
-\item{Las características del mapa \textbf{aes()} describe los ejes $(x,y)$, el color exterior (\textbf{color} o \textbf{colour}), el color interior (\textbf{fill}), la forma de los puntos (\textbf{shape}), el tipo de línea (\textbf{linetype}) y el tamaño (\textbf{size})}
-
-\item{Los objetos geométricos (\textbf{geometría}) determinan el tipo de gráfico:
-    
-  \begin{itemize}
-  
-  \item{Puntos ($geom\_point$)}
-  \item{Líneas ($geom\_lines$)}
-  \item{Histogramas ($geom\_histogram$)}
-  \item{Boxplot ($geom\_boxplot$)}
-  
-  \end{itemize}
-}
-
-\item{La \textbf{faceta} permite dividir un gráfico en múltiples gráficos de acuerdo con grupos}
+$$
+y_i = \beta_0 + \beta_1 x_{1i} + \beta_2 x_{2i} + ... + \beta_k x_{ki} + \varepsilon_i
+$$
 
 
+En notación matricial
 
-\end{enumerate}
+$$
+\boldsymbol{y} = \boldsymbol{X}\boldsymbol{\beta} + \boldsymbol{\varepsilon}
+$$
 
-## Ejercicios
+Donde
 
+$$
+n \cdot 1= n \cdot (k+1) * (k+1) \cdot 1 + n\cdot1
+$$
 
-\begin{enumerate}
+## Supuestos del modelo de regresión
 
-\item{Crear un gráfico que el ingreso promedio de acuerdo con la edad en años para las personas ocupados. Presente la gráfica diferenciada por ciudades.}
+**El teorema de Gauss-Markov afirma que** $\beta$ es un “mejor estimador lineal insesgado” siempre que:
 
-\item{Filtra la base de datos de personas ocupadas para el grupo de mujeres con ingresos de \$2.000.000 –  \$5.000.000. Muestre un gráfico sobre el nivel de educación en esta población.}
+- **Supuestos:**
+  - Independencia media: $E[\varepsilon_i|x_i] = 0$ para todo $i$
+  - Homocedasticidad: $Var[\varepsilon_i|x_i] = \sigma^2$ para todo $i$
+  - Perturbaciones no correlacionadas: $Cov[\varepsilon_i ,\varepsilon_j ] = 0$ para todo $i \neq j$
+  - $X$ es no estocástico: $Cov[X’,\varepsilon] = 0$ para todo X
 
-\end{enumerate}
+- **Otros que suelen incluirse:**
+  - $y$ normalmente distribuida
+  - Linealidad
+  - Sin multicolinealidad
+  - $\varepsilon_i$ son normales (perturbación normal)
 
+Si se incumple el supuesto de errores Independientes e Identicamente Distribuidos (**iid**) en MCO, la inferencia estadística no es válida.
 
-# Recursos alternativos
+## Consecuencias de MCO 
 
+### Sin considerar la estructura espacial
 
-- La librería `swirl` proporciona un tutorial sobre elementos básicos en R
+- Los coeficientes MCO de regresión estimados están sesgados e inconsistentes.
+- Los coeficientes MCO de regresión estimados son ineficientes.
+- El $R^2$ es exagerado.
+- Las inferencias no son correctas.
 
-```{r, echo=TRUE, eval=FALSE}
-install.packages(“swirl”)
-library (swirl)
-swirl()
-```
+# Modelo espaciales
 
+## Modelo espacial autorregresivo (SAR) 
 
+Incorpora dependencia espacial agregando un "rezago espacial" a la variable dependiente en el lado derecho de la ecuación de regresión y trata la correlación espacial como un proceso o efecto de interés.
 
-- Data wrangling with dplyr and tidyr (Cheat Sheet): [\textcolor{cyan}{Recurso 1.2}](https://github.com/sergiobarona03/Curso_EDA_2024_I/blob/main/Recursos%20alternativos/M%C3%B3dulo%201/Recurso12.pdf)
+- Los valores de $y$ en un área están directamente influenciados por los valores de $y$ encontrados en áreas vecinas.
+- Depende de cómo definimos el vecindario.
 
-- Visualización de datos usando ggplot2 (Guía Rápida): [\textcolor{cyan}{Recurso 1.3}](https://github.com/sergiobarona03/Curso_EDA_2024_I/blob/main/Recursos%20alternativos/M%C3%B3dulo%201/Recurso13.pdf)
+\centering
 
-- Factors with forcats (Cheat Sheet): [\textcolor{cyan}{Recurso 1.4}](https://github.com/sergiobarona03/Curso_EDA_2024_I/blob/main/Recursos%20alternativos/M%C3%B3dulo%201/Recurso14.pdf)
-  
-  \end{itemize}
-  
-# Bibliografía de consulta
-  
-\begin{itemize}
-  
-\item{Wickham, H. (2016) GGplot2. Elegant Graphics for Data Analysis. Springer}
-  
-\item{Grolemund, G. (2014). Hands-On Programming with R. O’Reilly Media: Sebastopol, CA.}
+![](C:/Users/danie/OneDrive/Escritorio/Spatial-Econometrics-using-R/spatecon_images/imagen15.png){#id .class width="30%" height="30%"}
 
-\item{Schutt, R. \& O’Neil, C. (2014). Doing Data Science. O’Reilly Media: Sebastopol, CA.}
-  
-\item{Wickham \& Grolemund, G. (2016). R for Data Science: Import, Tidy, Transform, Visualize, and Model Data. O’Reilly Media: Sebastopol, CA.}
-  
-\end{itemize}
-  
+## Modelo de error espacial (SEM) 
+
+- Examina la autocorrelación espacial entre los residuos de áreas adyacentes.
+
+- Trata la correlación espacial principalmente como un problema.
+	- Desestima la idea de que la correlación espacial pueda reflejar algún proceso significativo.
+	
+- El error espacial positivo puede reflejar:
+	- Un modelo mal especificado (particularmente una variable omitida que está espacialmente desordenada).
+
+- Unidad espacial de agregación incorrecta.
+
+\centering
+	
+![](C:/Users/danie/OneDrive/Escritorio/Spatial-Econometrics-using-R/spatecon_images/imagen16.png){#id .class width=30% height=30%}
+
+## SEM (cont.)
+
+$$
+\boldsymbol{y}= \boldsymbol{X} \beta + \boldsymbol{u}
+$$
+
+$$
+\boldsymbol{u} = \lambda \boldsymbol{Wu} + \boldsymbol{\varepsilon}
+$$
+
+$$
+\boldsymbol{u} = [\boldsymbol{I} - \boldsymbol{W}\lambda]^{-1}\boldsymbol{\varepsilon}
+$$
+
+Reemplazo en estructural,
+
+$$
+\boldsymbol{y}= \boldsymbol{X} \beta + [\boldsymbol{I} - \boldsymbol{W}\lambda]^{-1}\boldsymbol{\varepsilon}
+$$
+
+Efectos marginales son:
+
+$$
+\frac{\partial \boldsymbol{y}}{\partial \boldsymbol{X}} = \boldsymbol{I}\beta 
+$$
+
+Se estima por el método de Máxima Verosimilitud.
+
+# Test de identificación del tipo de modelación espacial
+
+### Elegir entre modelos: AIC y SC
+
+- AIC = -2L + 2k
+	
+	**donde $L$ es la log-verosimilitud y $k$ es el número de parámetros del modelo.**
+
+- SC = -2L + kln(N) (también conocido como BIC)
+	
+	**donde $N$ es el número de observaciones*.*
+	
+## Comentarios técnicos
+
+Pasos para determinar el grado de autocorrelación espacial de los datos y ejecutar una regresión espacial:
+
+1. Elija un criterio de vecindad ¿Qué zonas están relacionadas?
+
+2. Asigne ponderaciones a las zonas que están vinculadas
+
+3. Crear una matriz de ponderaciones espaciales
+
+4. Ejecutar una prueba estadística para examinar la autocorrelación espacial
+
+5. Ejecutar una regresión MCO
+
+6. Determinar qué tipo de regresión espacial ejecutar
+
+7. Ejecutar una regresión espacial
+
+8. Aplicar la matriz de pesos
+
+# Otros modelos: SLX y SAC
+
+### Modelo de rezago Espacial de las X's (SLX)
+
+$$
+\boldsymbol{y}= \boldsymbol{X} \beta + \boldsymbol{WX} \theta + \boldsymbol{\varepsilon} 
+$$
+
+### Modelo Espacial Autorregresión combinado (SAC)
+
+$$
+\boldsymbol{y}= \rho \boldsymbol{Wy} + \boldsymbol{X} \beta + \boldsymbol{u} 
+$$
+
+$$
+\boldsymbol{u} = \lambda \boldsymbol{Wu} + \boldsymbol{\varepsilon}  
+$$
+
+## Hay más
+
+\centering
+
+![](C:/Users/danie/OneDrive/Escritorio/Spatial-Econometrics-using-R/spatecon_images/imagen_modelos.png){#id .class width="80%" height="85%"}
+
+## Hay más
+
+\centering
+
+![](C:/Users/danie/OneDrive/Escritorio/Spatial-Econometrics-using-R/spatecon_images/imagen17.png){#id .class width="100%" height="85%"}
+
+## Tipo de archivos necesarios:
+
+Archivo Shape, extensión .shp. Contiene la información espacial más los atributos. Significa que formarán parte otros ficheros como shx, .dbf, y .prj. Desarrollado por ESRI
+
+## Referencias
+
+-   Root, E. Class Notes. (2015). Introduction to Spatial Regression Analysis. ICPSR Summer Workshop 2015.
+
+-   Dubé, J. , & Legros, D. (2014). Spatial econometrics using microdata.
+
+-   LeSage, J. P. , & Pace, R. K. (2009). Introduction to spatial econometrics. Boca Raton: CRC Press.
+
+-   Bivand, R. , E.J. Pebesma and V. Gomez-Rubio. (2013). Applied Spatial Data Analysis with R. New York: Springer.
