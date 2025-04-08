@@ -56,11 +56,7 @@ mun_merged <-  mun_shape[c("cod",
 mun_merged <- mun_merged %>% filter(nom_dpto != "ARCHIPIÉLAGO DE SAN ANDRÉS")
 
 # Se incorpora la variable AREA (km2) como variable de control
-area <- readxl::read_excel("CNPV_2018\\AREA_MUN_COL.xlsx")
-area$cod <- paste0(area$cod_dpto, area$cod_mun)
 
-mun_merged <- merge(mun_merged, area[c("cod", "area_km")],
-                    by = "cod")
 
 # Eliminar región sin vecinos
 mun_merged = mun_merged[-1114,]

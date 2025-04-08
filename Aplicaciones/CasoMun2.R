@@ -7,7 +7,7 @@ library(tidyverse)
 library(sf)
 
 # Definir directorio de trabajo
-setwd("C:\\Users\\Portatil\\Desktop\\Spatial Econometrics using R\\")
+setwd("C:\\Users\\Portatil\\Desktop\\Spatial-Econometrics-using-R\\")
 
 ##---------------------------------------##
 ## Cargar datos a nivel de departamentos ##
@@ -22,6 +22,10 @@ pob <- readxl::read_excel("CNPV_2018\\Pob_MUN_CNPV2018.xlsx")
 # Cargar datos de ingresos
 ing <- readxl::read_excel("CNPV_2018\\INGRESOS_MUN_DNP.xlsx")
 
+# Ocupación
+ocup <- readxl::read_excel("CNPV_2018\\OCUP_MUN_CNPV2018.xlsx") %>%
+  mutate(ocup_rate = percent_en_el_municipio)
+
 # Unir los datos
 mun_data <- nbi[c("cod_dpto", "nom_dpto", "nom_mun",
                   "cod", "tasa_nbi", "tasa_miseria",
@@ -30,11 +34,31 @@ mun_data <- nbi[c("cod_dpto", "nom_dpto", "nom_mun",
                   "comp_dep_eco")] %>% dplyr::left_join(pob[c("cod", "n")], 
                                       by = c("cod" = "cod")) %>%
   dplyr::left_join(ing[c("cod", "ingresos_totales",
-                         "ingresos_corrientes", "corr_tot")], by = c("cod" = "cod"))
+                         "ingresos_corrientes", "corr_tot")], by = c("cod" = "cod")) %>%
+  dplyr::left_join(ocup[c("cod", "ocup_rate")])
 
 # Tasas
 mun_data$tasa_nbi <- as.numeric(gsub(",", ".", mun_data$tasa_nbi))
 mun_data$tasa_miseria <- as.numeric(gsub(",", ".", mun_data$tasa_miseria))
+mun_data$comp_vivi <- as.numeric(gsub(",", ".", mun_data$comp_vivi))
+mun_data$comp_servi <- as.numeric(gsub(",", ".", mun_data$comp_servi))
+mun_data$comp_hacin <- as.numeric(gsub(",", ".", mun_data$comp_hacin))
+mun_data$comp_inasist <- as.numeric(gsub(",", ".", mun_data$comp_inasist))
+mun_data$comp_dep_eco <- as.numeric(gsub(",", ".", mun_data$comp_dep_eco))
+mun_data$n <- as.numeric(gsub(",", ".", mun_data$n))
+mun_data$ingresos_totales <- as.numeric(gsub(",", ".", mun_data$ingresos_totales))
+mun_data$ingresos_corrientes <- as.numeric(gsub(",", ".", mun_data$ingresos_corrientes))
+mun_data$corr_tot <- as.numeric(gsub(",", ".", mun_data$corr_tot))
+mun_data$ocup_rate <- as.numeric(gsub(",", ".", mun_data$ocup_rate))
+
+# Añadir datos del área
+area <- readxl::read_excel("CNPV_2018\\AREA_MUN_COL.xlsx")
+area$cod <- paste0(area$cod_dpto, area$cod_mun)
+
+mun_merged <- merge(mun_data, area[c("cod", "area_km")],
+                    by = "cod")
+
+writexl::write_xlsx(mun_merged, "CNPV_2018/Dataset_MUN_CNPV2018.xlsx")
 
 ##---------------------------------------##
 ## Visualizar NBI en mapas               ##
@@ -53,6 +77,12 @@ mun_merged <-  mun_shape[c("cod",
 
 # Por simplicidad, se omite San Andrés
 mun_merged <- mun_merged %>% filter(nom_dpto != "ARCHIPIÉLAGO DE SAN ANDRÉS")
+
+st_write(dpto_shape[c("ID",
+                      "DPTO",
+                      "AREA",
+                      "geometry")], "SpatialData\\dptos_col\\clean2_dpto_shape.shp")
+
 
 # Visualizar la variable "tasa_nbi"
 library(viridis)

@@ -1,31 +1,28 @@
 ---
-title: "**Introducción a la Modelación de Datos Espaciales usando R**"
-subtitle: ""
-
-author: 
+title: '**Introducción a la Modelación de Datos Espaciales usando R**'
+author:
 - Presentado por \newline
 - Mauricio Quiñones Domínguez, Ph.D. Política Pública \newline
 - Profesor Dpto. de Economía Universidad Javeriana Cali \newline
 - Diseño conjunto con \newline
 - Sergio Barona, Coordinador Laboratorio de Economía Aplicada - LEA \newline
-
-institute:
-- Universidad Javeriana Cali
-
 date: "29 y 30 de abril"
 output:
   html_document:
-    toc: true
+    toc: yes
     toc_float:
-        collapsed: true
-        smooth_scroll: false
-    number_sections: true
+      collapsed: yes
+      smooth_scroll: no
+    number_sections: yes
     theme: spacelab
     highlight: tango
-    
+  pdf_document:
+    toc: yes
+subtitle: ''
+institute: Universidad Javeriana Cali
 header-includes:
-  - \AtBeginEnvironment{CSLReferences}{\tiny}
-  - \AtBeginSection{}
+- \AtBeginEnvironment{CSLReferences}{\tiny}
+- \AtBeginSection{}
 ---
 
 <font face="" size = 5> 
@@ -70,12 +67,12 @@ Sugerencia
 	
 	ii. Las áreas de observación son generalmente de diferentes tamaños. Heterogeneidad $\rightarrow$ Heterocedasticidad.
 
-![](C:/Users/danie/OneDrive/Escritorio/Spatial-Econometrics-using-R/spatecon_images/leyNewton.png){#id .class width=65% height=65%}
+![](C:/Users/Portatil/Desktop/Spatial-Econometrics-using-R/spatecon_images/leyNewton.png){#id .class width=65% height=65%}
 
 	
-![](C:/Users/danie/OneDrive/Escritorio/Spatial-Econometrics-using-R/spatecon_images/mapa_bogota.png){#id .class width=65% height=65%}
+![](C:/Users/Portatil/Desktop/Spatial-Econometrics-using-R/spatecon_images/mapa_bogota.png){#id .class width=65% height=65%}
 
-![](C:/Users/danie/OneDrive/Escritorio/Spatial-Econometrics-using-R/spatecon_images/mapa_bogota_2.png){#id .class width=65% height=65%}
+![](C:/Users/Portatil/Desktop/Spatial-Econometrics-using-R/spatecon_images/mapa_bogota_2.png){#id .class width=65% height=65%}
 
 ---
 
@@ -182,23 +179,23 @@ Sugerencia
 
 - Matriz criterio Reina, torre o alfil. Estos términos se explican por sí solos y se refieren a qué tipos de celdas adyacentes elegimos incluir como "vecinas".
 
-![](C:/Users/danie/OneDrive/Escritorio/Spatial-Econometrics-using-R/spatecon_images/imagen6.png){#id .class width=100% height=85%}
+![](C:/Users/Portatil/Desktop/Spatial-Econometrics-using-R/spatecon_images/imagen6.png){#id .class width=100% height=85%}
 
 - Usando la matriz reina, para una distancia definida, la matriz $W$ se llena con ceros y unos para cumplir el criterio de cercanía.
 
 - $W$ o “Matriz de contigüidad” – un término general que identifica vecinos con 1 y no vecinos con 0.
 
-![](C:/Users/danie/OneDrive/Escritorio/Spatial-Econometrics-using-R/spatecon_images/fig_mat_ones.png){#id .class width=70% height=70%}
+![](C:/Users/Portatil/Desktop/Spatial-Econometrics-using-R/spatecon_images/fig_mat_ones.png){#id .class width=70% height=70%}
 
 - Luego se debe normalizar a la unidad por cada fila. Es una matriz no-negativa donde la suma por fila es igual a uno.
 
 - “Matriz de ponderaciones”: casi siempre reservaremos este término para referirnos a una matriz de contigüidad estandarizada por filas, con ponderaciones: 0 $\le$ $w_{ij}$ $\le$ 1
 
-![](C:/Users/danie/OneDrive/Escritorio/Spatial-Econometrics-using-R/spatecon_images/fig_mat_w.png){#id .class width=70% height=70%}
+![](C:/Users/Portatil/Desktop/Spatial-Econometrics-using-R/spatecon_images/fig_mat_w.png){#id .class width=70% height=70%}
 
 - Por lo tanto, se obtiene una matriz $W$ de dimensiones $N$ x $N$, en este caso $7$ x $7$, que será usada para "rezagar" espacialmente las variables de interés, de acuerdo al tipo de modelación.
 
-![](C:/Users/danie/OneDrive/Escritorio/Spatial-Econometrics-using-R/spatecon_images/fig_mat_wij.png){#id .class width=70% height=70%}
+![](C:/Users/Portatil/Desktop/Spatial-Econometrics-using-R/spatecon_images/fig_mat_wij.png){#id .class width=70% height=70%}
 
 - Hay muchas variedades de matrices de pesos.
 
@@ -240,65 +237,56 @@ library(flextable)
 
 ```{r primeros mapas, fig.cap="", results='show', warning=FALSE, message=FALSE, echo=TRUE}
 
-#---------------------------------------#
-# Cargar datos y convertir en polígonos #
-#---------------------------------------#
-bg.sf <- read_sf(dsn=paste(getwd(),"/EOD_Bogota_2019/Zonificacion_shapefiles/ZONAS", sep = ""), layer="UTAM")
-bg.sf <- st_zm(bg.sf)
-bg.sf %>% head() %>% print(width = 120)
+# Cargar marco de datos
+setwd("C:/Users/Portatil/Desktop/Spatial-Econometrics-using-R/")
 
-summary(bg.sf)
-#View(bg)
-# Convertir SpatialPolygonsDataFrame en data.frame
-bg.df <- data.frame(bg.sf)
+dpto.data <- readxl::read_excel("CNPV_2018\\Dataset_DPTO_CNPV2018.xlsx")
 
-names(bg.df)           # Nombres de las variables
-class(bg.df)           # Clase del objeto
-summary(bg.df)         # Resumen descriptivo
+library(knitr)
+library(kableExtra)
 
-# Cargar la base de datos
-dataset = readxl::read_excel(paste0(getwd(),"/Final.input.dataset.xlsx"))
+# Examinar datos
+head(dpto.data)
+```
 
-bg_data <- bg.sf %>% 
-  mutate(Utam = UTAM) %>%
-  left_join(dataset, by = "Utam") %>% na.omit()
+```{r primeros mapas, fig.cap="", results='show', warning=FALSE, message=FALSE, echo=TRUE}
+numeric_cols <- dpto.data[, sapply(dpto.data, is.numeric)]
+numeric_cols <- numeric_cols %>% dplyr::select(-cod)
 
-# Remover área rual
-bg_data <- bg_data %>% filter(!Utam %in%
-                                          c("UPR1",
-                                            "UPR2",
-                                            "UPR3") )
-bg_data <- bg_data %>% filter(elder > 0, minor > 0, ingresos_bajos > 0,
-                              higher > 0, agre > 0)
-dataset_plot <- data.frame(bg_data)
+# Calcula estadísticas para cada columna numérica
+stats <- data.frame(
+  Variable = names(numeric_cols),
+  Min = sapply(numeric_cols, min, na.rm = TRUE),
+  Max = sapply(numeric_cols, max, na.rm = TRUE),
+  Mean = sapply(numeric_cols, mean, na.rm = TRUE),
+  SD = sapply(numeric_cols, sd, na.rm = TRUE),
+  Median = sapply(numeric_cols, median, na.rm = TRUE),
+  Q1 =  sapply(numeric_cols, quantile, na.rm = TRUE, probs = 0.25),
+  Q3 = sapply(numeric_cols, quantile, na.rm = TRUE, probs = 0.75),
+  stringsAsFactors = FALSE
+)
 
-# Descriptivas
-# summary(dataset_plot$mean_size)    # Tamaño promedio del hogar por UTAM
-# summary(dataset_plot$minor) # Proporción de <18 años por UTAM
-# summary(dataset_plot$elder) # Proporción de >65 años por UTAM
-# summary(dataset_plot$ingresos_bajos) # Proporción de hogares con ingresos < 1'5
-# summary(dataset_plot$higher) # Proporción de personas con educación superior
-# summary(dataset_plot$agre) # Proporción de personas que han recibido agresiones en sus viajes
+# Recodificar variable
+stats$Variable = factor(stats$Variable,
+                        levels = c("comp_dep_eco", "comp_hacin", "comp_inasist", "comp_servi", "comp_vivi", "ingresos_corrientes", "ingresos_totales", "corr_tot", "n" ,"ocupacion_dpto" ,"tasa_miseria","tasa_nbi"),
+                        labels = c("Dependencia economica",
+                                   "Hacinamiento",
+                                   "Inasistencia escolar",
+                                   "Servicios inadecuados",
+                                   "Viviendas inadecuadas",
+                                   "Ingresos corrientes",
+                                   "Ingresos totales",
+                                   "Razon corr-tot",
+                                   "N", 
+                                   "Ocupacion",
+                                   "Miseria",
+                                   "NBI"))
 
-# Revisión de las conexiones o links del shapefile 
-bg_data_test <- poly2nb(bg_data)
-bg_data_test
 
-# Se eliminan las UTAM que no tienen vecinos. Eliminamos la fila 18 del shapefile. Y se crea la matriz W
+# Presenta las estadísticas en una tabla
+kable(stats, caption = "Resumen descriptivo (n = 33)", digits = 2, row.names = F)
 
-bg_data2 <- bg_data[-c(18),]
-bg_data_gal <- poly2nb(bg_data2)
-bgQ1.gal <- nb2listw(bg_data_gal)
-summary(bgQ1.gal)
 
-# Definir data frame
-bg.df <- data.frame(bg_data2)
-
-# Cambiar el nombre de la variable dependiente
-names(bg.df)[names(bg.df) == "Tasa.de.viajes.en.transporte.público.por.persona.al.día."] <- "Rate"
-bg.df$Rate = as.numeric(bg.df$Rate)
-
-summary(bg.df$Rate)
 ```
 
 ---
@@ -349,7 +337,7 @@ $$
 	- El patrón espacial de valores observado es igual de probable que cualquier otro patrón espacial.
 	- La ubicación de los valores puede modificarse sin que ello afecte al contenido informativo de los datos.
 	
-![](C:/Users/danie/OneDrive/Escritorio/Spatial-Econometrics-using-R/spatecon_images/imagen1.png){#id .class width=70% height=70%}
+![](C:/Users/Portatil/Desktop/Spatial-Econometrics-using-R/spatecon_images/imagen1.png){#id .class width=70% height=70%}
 
 
 - Valor esperado de la I de Moran bajo la hipótesis de ausencia de autocorrelación espacial:
@@ -375,39 +363,115 @@ $$t=\frac{I - E(I)}{\sqrt{Var(I)}}$$
 - Recuerdan **Modifiable Analysis Unit Problem o MAUP (Problema de unidad de área modificable)**?.
 
 Las medidas de autocorrelación espacial dependen de la escala
-![](C:/Users/danie/OneDrive/Escritorio/Spatial-Econometrics-using-R/spatecon_images/imagen10.png){#id .class width=70% height=70%}
+![](C:/Users/Portatil/Desktop/Spatial-Econometrics-using-R/spatecon_images/imagen10.png){#id .class width=70% height=70%}
 
-### **Ejercicio con la Encuesta Origen-Destino (EOD) de Bogotá año 2019**
+### **Ejercicio: Necesidades Básicas Insatisfechas (NBI) 2018**
 
 ```{r I Moran, fig.cap="", results='show', warning=FALSE, message=FALSE, echo=TRUE}
+# Datos vectoriales
+dpto_shape <- st_read(dsn = "SpatialData\\dptos_col\\",
+                      layer = "clean2_dpto_shape")
 
-# Véase la información de los pesos de la matriz
-names(attributes(bgQ1.gal))  # Nombres de los atributos
-card(bgQ1.gal$neighbours)    # Número de vecinos para cada observación
-range(card(bgQ1.gal$neighbours))  # Rango (número de vecinos)
-1/rev(range(card(bgQ1.gal$neighbours))) # Rango (pesos)
-summary(bgQ1.gal, zero.policy=T)   # Resumen
+# Unir las bases de datos
+dpto_merged <-  dpto_shape %>%
+  dplyr::left_join(dpto_data[c("dpto_clean", "dpto", "tasa_nbi",
+                        "tasa_miseria", "comp_vivi",
+                        "comp_servi", "comp_hacin",
+                        "comp_inasist", "comp_dep_eco",
+                        "n", "ingresos_totales",
+                        "ingresos_corrientes", "corr_tot")],
+            by = c("DPTO" = "dpto_clean"))
 
-# 
-min(bg.df$Rate)      # 0.07728526
-max(bg.df$Rate)      # 0.9365709
+# Por simplicidad, se omite San Andrés
+dpto_merged <- dpto_merged %>% filter(DPTO != "ARCHIPIELAGO DE SAN ANDRES")
 
-# - Rechazo o no?
-moran.test(bg.df$Rate, bgQ1.gal, alternative="two.sided", zero.policy=T)
+
+# Variable de interés: tasa NBI
+summary(dpto_merged$tasa_nbi)
+min(dpto_merged$tasa_nbi)      
+max(dpto_merged$tasa_nbi)      
 
 # Se presenta el mapa sobre  bg.df$Rate. Seleccionar la paleta
 colors <- brewer.pal(5, "YlOrBr")  
-color.cat.reg<-classIntervals(bg.df$Rate, n=5, style="quantile", dataPrecision=2)
+color.cat.reg<-classIntervals(dpto_merged$tasa_nbi, n=5, style="quantile", dataPrecision=2)
 colcode <- findColours(color.cat.reg, colors)
 
-## Figura
-par(mfrow=c(1,1))
-plot(bg_data[c("UTAM", "geometry")], col=colcode)
-title('Tasa Viajes Trans. Pub. por día')
-legend('topleft', legend=c(names(attr(colcode, 'table'))), fill=c(attr(colcode, 'palette')), 
-       title='Tasa Viajes Trans. Pub. por día')
+```
+
+```{r I Moran, fig.cap="", results='show', warning=FALSE, message=FALSE, echo=TRUE}
+# Figura 1
+ggplot(data = dpto_merged) +
+  geom_sf(aes(fill = tasa_nbi), color = "black", size = 0.2) + 
+  scale_fill_gradientn(colors = c("#1a9850", "#fee08b", "#d73027"), 
+                       values = c(0, 0.5, 1), 
+                       name = "Tasa NBI (%)") + 
+  theme_bw() + 
+  labs(title = "Distribucion espacial del NBI por Departamento (% en NBI)",
+       caption = "Fuente: DANE. CNPV-2018.") +
+  theme(axis.text = element_blank(),
+        axis.ticks = element_blank(),
+        panel.grid = element_blank(),
+        legend.position = c(0.15, 0.9),  
+        legend.background = element_rect(fill = "white", color = "black"))
 
 ```
+
+```{r I Moran, fig.cap="", results='show', warning=FALSE, message=FALSE, echo=TRUE}
+# Figura 2
+# Visualizar la variable "tasa_nbi" a partir de intervalos
+dpto_merged$tasa_nbi_cat <- cut(dpto_merged$tasa_nbi, 
+                                breaks = c(0, 10, 20, 30, 40, 50, Inf), 
+                                labels = c("0-10%", "10-20%",
+                                           "20-30%", "30-40%", 
+                                           "40-50%", "50%+"),
+                                include.lowest = TRUE)
+
+colors_intervals <- c("0-10%" = "#1a9850",  # Verde
+                      "10-20%" = "#66bd63", # Verde claro
+                      "20-30%" = "#fee08b", # Amarillo-naranja
+                      "30-40%" = "#fdae61", # Naranja
+                      "40-50%" = "#f46d43", # Rojo claro
+                      "50%+" = "#d73027")   # Rojo fuerte
+
+map_nbi <- ggplot(data = dpto_merged) +
+  geom_sf(aes(fill = tasa_nbi_cat), color = "black", size = 0.2) + 
+  scale_fill_manual(values = colors_intervals, name = "Tasa NBI (%)") + 
+  theme_bw() + 
+  labs(title = "Distribucion espacial del NBI por Departamento (en % de NBI)",
+       caption = "Fuente: DANE. CNPV-2018.") +
+  theme(axis.text = element_blank(),
+        axis.ticks = element_blank(),
+        panel.grid = element_blank(),
+        legend.position = c(0.15, 0.88),  
+        legend.background = element_rect(fill = "white", color = "black"))
+map_nbi
+
+```
+
+```{r I Moran, fig.cap="", results='show', warning=FALSE, message=FALSE, echo=TRUE}
+# Revisión de las conexiones o links del shapefile 
+nb_dpto <- poly2nb(dpto_merged)
+nb_dpto
+
+# Se crea la matriz W
+nb2_dpto <- nb2listw(nb_dpto)
+summary(nb2_dpto)
+
+# Véase la información de los pesos de la matriz
+names(attributes(nb2_dpto))  # Nombres de los atributos
+card(nb2_dpto$neighbours)    # Número de vecinos para cada observación
+range(card(nb2_dpto$neighbours))  # Rango (número de vecinos)
+1/rev(range(card(nb2_dpto$neighbours))) # Rango (pesos)
+summary(nb2_dpto, zero.policy=T)   # Resumen
+```
+
+```{r I Moran, fig.cap="", results='show', warning=FALSE, message=FALSE, echo=TRUE}
+# I de Moran
+moran.test(dpto_merged$tasa_nbi, 
+           nb2_dpto, alternative="two.sided", zero.policy=T)
+```
+
+
 
 ## Estadísticos de indicadores locales de asociación espacial (Local indicators of spatial association - **LISA**.
 
@@ -430,7 +494,26 @@ $$
 
 ```{r LISA, fig.cap="", results='show', warning=FALSE, message=FALSE, echo=TRUE}
 
-moran.plot(bg.df$Rate, bgQ1.gal, zero.policy=T, labels=as.character(bg.df$UTAM),
+# Moran plot
+# Se presenta el mapa sobre  bg.df$Rate. Seleccionar la paleta
+library(RColorBrewer)
+library(classInt)
+
+colors <- brewer.pal(5, "YlOrBr")  
+color.cat.reg<-classIntervals(dpto_merged$tasa_nbi, n=5, 
+                              style="quantile", dataPrecision=2)
+colcode <- findColours(color.cat.reg, colors)
+
+## Figura: Distribución espacial del NBI (%)
+par(mfrow=c(1,1))
+plot(dpto_merged[c("tasa_nbi", "geometry")], col=colcode)
+title('Distribucion tasa NBI (%)')
+legend('topleft', legend=c(names(attr(colcode, 'table'))), fill=c(attr(colcode, 'palette')), 
+       title='NBI (%)')
+
+# Moran plot
+moran.plot(dpto_merged$tasa_nbi, nb2_dpto, 
+           zero.policy=T, labels=as.character(dpto_merged$DPTO),
            xlab=NULL, ylab=NULL, type="p", col="#AE017E",
            cex=0.8, pch=1)
 
@@ -456,7 +539,7 @@ moran.plot(bg.df$Rate, bgQ1.gal, zero.policy=T, labels=as.character(bg.df$UTAM),
 
 --- 
 
-![](C:/Users/danie/OneDrive/Escritorio/Spatial-Econometrics-using-R/spatecon_images/imagen12.png){#id .class width=70% height=70%}
+![](C:/Users/Portatil/Desktop/Spatial-Econometrics-using-R/spatecon_images/imagen12.png){#id .class width=70% height=70%}
 
 
 ---
@@ -500,7 +583,7 @@ moran.plot(bg.df$Rate, bgQ1.gal, zero.policy=T, labels=as.character(bg.df$UTAM),
 
 - **Punto de Partida: MODELO MÍNIMOS CUADRADOS ORDINARIOS - MCO**
 
-![Regresión estándar MCO](C:/Users/danie/OneDrive/Escritorio/Spatial-Econometrics-using-R/spatecon_images/imagen18.png){#id .class width=100% height=85%}
+![Regresión estándar MCO](C:/Users/Portatil/Desktop/Spatial-Econometrics-using-R/spatecon_images/imagen18.png){#id .class width=100% height=85%}
 
 $$
 y_i = \beta_0 + \beta_1 x_{1i} + \beta_2 x_{2i} + ... + \beta_k x_{ki} + \varepsilon_i
@@ -581,15 +664,179 @@ $$
   - El $R^2$ es exagerado.
 
   - Las inferencias no son correctas.
+  
+  
+```{r maps, fig.cap="", results='show', warning=FALSE, message=FALSE, echo=TRUE}
+# Cargar datos
+setwd("C:/Users/Portatil/Desktop/Spatial-Econometrics-using-R/")
+mun.data <- readxl::read_excel("CNPV_2018/Dataset_MUN_CNPV2018.xlsx")
+
+# Eliminar filas sin información
+mun.data <- mun.data %>% na.omit()
+
+# Selección de columnas numéricas
+numeric_cols <- mun.data[, sapply(mun.data, is.numeric)]
+numeric_cols <- numeric_cols %>% dplyr::select(-c("cod_dpto", "cod"))
+
+# Calcula estadísticas para cada columna numérica
+stats <- data.frame(
+  Variable = names(numeric_cols),
+  Min = sapply(numeric_cols, min, na.rm = TRUE),
+  Max = sapply(numeric_cols, max, na.rm = TRUE),
+  Mean = sapply(numeric_cols, mean, na.rm = TRUE),
+  SD = sapply(numeric_cols, sd, na.rm = TRUE),
+  Median = sapply(numeric_cols, median, na.rm = TRUE),
+  Q1 =  sapply(numeric_cols, quantile, na.rm = TRUE, probs = 0.25),
+  Q3 = sapply(numeric_cols, quantile, na.rm = TRUE, probs = 0.75),
+  stringsAsFactors = FALSE
+)
+
+# Recodificar variable
+stats$Variable = factor(stats$Variable,
+                        levels = c("comp_dep_eco", "comp_hacin", "comp_inasist", "comp_servi", "comp_vivi", "ingresos_corrientes", "ingresos_totales", "corr_tot", "n" ,"ocup_rate" ,"tasa_miseria","tasa_nbi", "area_km"),
+                        labels = c("Dependencia economica",
+                                   "Hacinamiento",
+                                   "Inasistencia escolar",
+                                   "Servicios inadecuados",
+                                   "Viviendas inadecuadas",
+                                   "Ingresos corrientes",
+                                   "Ingresos totales",
+                                   "Razon corr-tot",
+                                   "N", 
+                                   "Ocupacion",
+                                   "Miseria",
+                                   "NBI", "Area (km2)"))
+
+
+# Presenta las estadísticas en una tabla
+kable(stats, caption = "Resumen descriptivo (n = 33)", digits = 2, row.names = F)
+
+```
+
+```{r maps, fig.cap="", results='show', warning=FALSE, message=FALSE, echo=TRUE}
+# Cargar mapa
+# Leer dpto_shape
+setwd("C:/Users/Portatil/Desktop/Spatial-Econometrics-using-R/")
+mun_shape <- st_read(dsn = "SpatialData\\DANE_geodata\\",
+                      layer = "MGN_ANM_MPIOS") %>% mutate(
+                        cod = as.numeric(
+                          paste0(DPTO_CCDGO, MPIO_CCDGO))
+                      )
+
+# Unir las bases de datos
+mun_merged <-  mun_shape[c("cod",
+                             "geometry")] %>%
+  left_join(mun.data,by = c("cod" = "cod"))
+
+# Eliminar región sin vecinos
+mun_merged = mun_merged[-c(629, 630),]
+
+# Figura 3:
+library(viridis)
+
+ggplot(data = mun_merged) +
+  geom_sf(aes(fill = tasa_nbi), color = "black", size = 0.2) + 
+  scale_fill_gradientn(colors = c("#1a9850", "#fee08b", "#d73027"), 
+                       values = c(0, 0.5, 1), 
+                       name = "Tasa NBI (%)") + 
+  theme_bw() + 
+  labs(title = "Distribucion espacial del NBI por Municipios (% en NBI)",
+       caption = "Fuente: DANE. CNPV-2018.") +
+  theme(axis.text = element_blank(),
+        axis.ticks = element_blank(),
+        panel.grid = element_blank(),
+        legend.position = c(0.15, 0.9),  
+        legend.background = element_rect(fill = "white", color = "black"))
+```
+
+```{r maps, fig.cap="", results='show', warning=FALSE, message=FALSE, echo=TRUE}
+
+# Figura 4:
+mun_merged$tasa_nbi_cat <- cut(mun_merged$tasa_nbi, 
+                                breaks = c(0, 10, 20, 30, 40, 50, Inf), 
+                                labels = c("0-10%", "10-20%",
+                                           "20-30%", "30-40%", 
+                                           "40-50%", "50%+"),
+                                include.lowest = TRUE)
+
+colors_intervals <- c("0-10%" = "#1a9850",  # Verde
+                      "10-20%" = "#66bd63", # Verde claro
+                      "20-30%" = "#fee08b", # Amarillo-naranja
+                      "30-40%" = "#fdae61", # Naranja
+                      "40-50%" = "#f46d43", # Rojo claro
+                      "50%+" = "#d73027")   # Rojo fuerte
+
+map_nbi <- ggplot(data = mun_merged) +
+  geom_sf(aes(fill = tasa_nbi_cat), color = "black", size = 0.2) + 
+  scale_fill_manual(values = colors_intervals, name = "Tasa NBI (%)") + 
+  theme_bw() + 
+  labs(title = "Distribucion espacial del NBI por Municipios (en % de NBI)",
+       caption = "Fuente: DANE. CNPV-2018.") +
+  theme(axis.text = element_blank(),
+        axis.ticks = element_blank(),
+        panel.grid = element_blank(),
+        legend.position = c(0.15, 0.88),  
+        legend.background = element_rect(fill = "white", color = "black"))
+map_nbi
+
+```
+
+```{r maps, fig.cap="", results='show', warning=FALSE, message=FALSE, echo=TRUE}
+# Revisión de las conexiones o links del shapefile 
+nb_mun <- poly2nb(mun_merged)
+nb_mun
+
+# Se crea la matriz W
+nb2_mun<- nb2listw(nb_mun)
+summary(nb2_mun)
+
+# Examinar la variable dependiente
+summary(mun_merged$tasa_nbi)
+
+# Véase la información de los pesos de la matriz
+names(attributes(nb2_mun))  # Nombres de los atributos
+card(nb2_mun$neighbours)    # Número de vecinos para cada observación
+range(card(nb2_mun$neighbours))  # Rango (número de vecinos)
+1/rev(range(card(nb2_mun$neighbours))) # Rango (pesos)
+summary(nb2_mun, zero.policy=T)   # Resumen
+
+# - Rechazo o no?
+moran.test(mun_merged$tasa_nbi, 
+           nb2_mun, alternative="two.sided", zero.policy=T)
+```
+
+```{r maps, fig.cap="", results='show', warning=FALSE, message=FALSE, echo=TRUE}
+# Se presenta el mapa sobre  bg.df$Rate. Seleccionar la paleta
+library(RColorBrewer)
+library(classInt)
+
+colors <- brewer.pal(5, "YlOrBr")  
+color.cat.reg<-classIntervals(dpto_merged$tasa_nbi, n=5, 
+                              style="quantile", dataPrecision=2)
+colcode <- findColours(color.cat.reg, colors)
+
+## Figura: Distribución espacial del NBI (%)
+par(mfrow=c(1,1))
+plot(mun_merged[c("tasa_nbi", "geometry")], col=colcode)
+title('Distribucion tasa NBI (%)')
+legend('topleft', legend=c(names(attr(colcode, 'table'))), fill=c(attr(colcode, 'palette')), 
+       title='NBI (%)')
+
+# Moran plot
+moran.plot(mun_merged$tasa_nbi, nb2_mun, 
+           zero.policy=T, labels=as.character(mun_merged$nom_mun),
+           xlab=NULL, ylab=NULL, type="p", col="#AE017E",
+           cex=1, pch=1)
+```
+
 
 ```{r MCO, fig.cap="", results='show', warning=FALSE, message=FALSE, echo=TRUE}
 
-# En lo sucesivo, trabajamos con las siguientes transformaciones
-lograte= log(bg.df$Rate)
+# Logaritmo natural de la tasa
+mun_merged$tasa_nbi <- log(mun_merged$tasa_nbi)
 
 # Se propone una regresión lineal múltiple con las siguientes variables
-reg_mco <- lm(lograte ~  mean_size + minor + elder
-           + ingresos_bajos + higher, data=bg.df)
+reg_mco <- lm(tasa_nbi ~  n + corr_tot + log(area_km) + ocup_rate, data=mun_merged)
 summary(reg_mco)
 
 reg_mco_res <- reg_mco$residuals
@@ -600,30 +847,34 @@ reg_mco_res <- reg_mco$residuals
 
 # A continuación examinamos los residuos
 me1 <- mean(residuals(reg_mco))
-me1    # Aprox. 0
+me1    
 sd1 <- sd(residuals(reg_mco))
-sd1    # 0.2562
+sd1    
 summary(residuals(reg_mco))  # Simetría razonable
 
-hist(residuals(reg_mco),  breaks=seq(-2, 1, .2), col=8, probability=T,
+hist(residuals(reg_mco),  breaks=seq(-2, 4.2, 0.1), col=8, probability=T,
      ylab='Density', main='Histogram of Residuals(reg_mco)',
      xlab='Residuals(reg_mco)')
 box()
-curve(dnorm(x, mean=me1, sd=sd1), from=-2, to=2, add=T,
+curve(dnorm(x, mean=me1, sd=sd1), from=-2, to=4.2, add=T,
       col='red', lwd=2)
 
 # Hay señales de ouliers. Veamos el QQ-plot
-
-qqPlot(residuals(reg_mco), distribution="norm",
+library(car)
+car::qqPlot(residuals(reg_mco), distribution="norm",
        xlab='', main='Quantile Comparison Plot reg_mco residuals',
        envelope=.95, las=0, pch=NA, lwd=2, col="red",
        line="quartiles")
+
 par(new=TRUE)
-qqPlot(residuals(reg_mco), distribution="norm", envelope=FALSE,
-        pch=1, cex=1, col="black")
+car::qqPlot(residuals(reg_mco), distribution="norm", envelope=FALSE,
+       pch=1, cex=1, col="black")
 par(new=FALSE)
 
 # Nuestra intuición se verifica con numerosas pruebas de normalidad univariada
+library(nortest)
+library(tseries) 
+
 ad.test(residuals(reg_mco))       
 lillie.test(residuals(reg_mco))   
 pearson.test(residuals(reg_mco))  
@@ -638,24 +889,22 @@ plot(fitted(reg_mco), residuals(reg_mco), xlab="Fitted y", ylab= "Residuals",
 abline(h=0)
 
 # Usemos una prueba formal:
+library(lmtest)
 bptest(reg_mco) # No se rechaza Ho (Homocedasticidad)
 
 #----------------------------------------------#
 # Se verifica la independencia de los residuos #
 #----------------------------------------------#
 
-# Test de Durbin-Watson para autocorrelación de los errores
-dwtest(reg_mco)
-
-
 # Véase la información de los pesos de la matriz
-names(attributes(bgQ1.gal))  # Nombres de los atributos
-card(bgQ1.gal$neighbours)    # Número de vecinos para cada observación
-range(card(bgQ1.gal$neighbours))  # Rango (número de vecinos)
-1/rev(range(card(bgQ1.gal$neighbours))) # Rango (pesos)
-summary(bgQ1.gal, zero.policy=T)   # Resumen
+names(attributes(nb2_mun))  # Nombres de los atributos
+card(nb2_mun$neighbours)    # Número de vecinos para cada observación
+range(card(nb2_mun$neighbours))  # Rango (número de vecinos)
+1/rev(range(card(nb2_mun$neighbours))) # Rango (pesos)
+summary(nb2_mun, zero.policy=T)   # Resumen
 
-moran.test(reg_mco$residuals, bgQ1.gal, alternative="two.sided", zero.policy=T)
+moran.test(reg_mco$residuals, 
+           nb2_mun, alternative="two.sided", zero.policy=T)
 
 # Seleccionar la paleta
 colors <- brewer.pal(5, "YlOrBr")  
@@ -669,7 +918,7 @@ title('Map of Regression Residuals')
 legend('topleft', legend=c(names(attr(colcode, 'table'))), fill=c(attr(colcode, 'palette')), 
        title='Regression Residuals')
 
-moran.plot(reg_mco$residuals, bgQ1.gal, zero.policy=T, labels=as.character(bg.df$UTAM),
+moran.plot(reg_mco$residuals, nb2_mun, zero.policy=T, labels=as.character(mun_merged$nom_mun),
            xlab=NULL, ylab=NULL, type="p", col="#AE017E",
            cex=0.8, pch=1)
 ```
@@ -683,7 +932,7 @@ moran.plot(reg_mco$residuals, bgQ1.gal, zero.policy=T, labels=as.character(bg.df
 	- Los valores de $y$ en un área están directamente influenciados por los valores de $y$ encontrados en áreas vecinas.
 	- Depende de cómo definimos el vecindario.
 
-![](C:/Users/danie/OneDrive/Escritorio/Spatial-Econometrics-using-R/spatecon_images/imagen15.png){#id .class width=30% height=30%}
+![](C:/Users/Portatil/Desktop/Spatial-Econometrics-using-R/spatecon_images/imagen15.png){#id .class width=30% height=30%}
 
 
 $$
@@ -735,7 +984,7 @@ summary(bg.lag.eig.imp, zstats = TRUE, short = TRUE)
 	- Un modelo mal especificado (particularmente una variable omitida que está espacialmente desordenada).
 	- Unidad espacial de agregación incorrecta.
 	
-![](C:/Users/danie/OneDrive/Escritorio/Spatial-Econometrics-using-R/spatecon_images/imagen16.png){#id .class width=30% height=30%}
+![](C:/Users/Portatil/Desktop/Spatial-Econometrics-using-R/spatecon_images/imagen16.png){#id .class width=30% height=30%}
 
 
 $$
@@ -903,12 +1152,12 @@ BIC(bg.lag.error)    # 38.09337
 
 **Hay mas**
 
-![](C:/Users/danie/OneDrive/Escritorio/Spatial-Econometrics-using-R/spatecon_images/imagen_modelos.png){#id .class width=60% height=65%}
+![](C:/Users/Portatil/Desktop/Spatial-Econometrics-using-R/spatecon_images/imagen_modelos.png){#id .class width=60% height=65%}
 
 
 
 
-![](C:/Users/danie/OneDrive/Escritorio/Spatial-Econometrics-using-R/spatecon_images/imagen17.png){#id .class width=100% height=85%}
+![](C:/Users/Portatil/Desktop/Spatial-Econometrics-using-R/spatecon_images/imagen17.png){#id .class width=100% height=85%}
 
 
 

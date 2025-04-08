@@ -20,12 +20,52 @@ nbi <- readxl::read_excel("CNPV_2018\\NBI_DPTO_CNPV2018.xlsx")
 pob <- readxl::read_excel("CNPV_2018\\Pob_DPTO_CNPV2018.xlsx")
   
 # Cargar datos de ingresos
-ing <- readxl::read_excel("CNPV_2018\\INGRESOS_DPTO_DNP.xlsx") %>% mutate(cod = cod_dpto/1000)
+ing_dpto <- readxl::read_excel("CNPV_2018\\INGRESOS_DPTO_DNP.xlsx") %>% mutate(cod = cod_dpto/1000)
+
+ing_mun <- readxl::read_excel("CNPV_2018\\INGRESOS_MUN_DNP.xlsx") %>%
+  filter(cod_dpto == 11) %>% mutate(cod = cod_dpto) %>%
+  dplyr::select(cod_dpto, nom_dpto, ingresos_totales,
+         ingresos_corrientes, corr_tot, cod)
+
+ing <- rbind(ing_dpto, ing_mun) %>% dplyr::select(c("cod",
+                                           "ingresos_totales",
+                                           "ingresos_corrientes",
+                                           "corr_tot")) 
+
+# Tasa de ocupación
+ocup_dpto <- readxl::read_excel("CNPV_2018\\OCUP_DPTO_CNPV2018.xlsx") %>%
+  mutate(cod = cod_dpto/1000)
+ocup_mun <-readxl::read_excel("CNPV_2018\\OCUP_MUN_CNPV2018.xlsx") %>%
+  filter(cod_dpto == 11) %>% mutate(cod = cod_dpto,
+                                    nom_dpto = nom_dpto_norm,
+                                  ocupacion_dpto = percent_en_el_municipio) %>%
+  dplyr::select(cod_dpto, nom_dpto, ocupacion_dpto, cod)
+
+ocup <- rbind(ocup_dpto, ocup_mun)  %>% dplyr::select(c("cod",
+                                                        "ocupacion_dpto")) 
 
 # Unir los datos
 dpto_data <- nbi %>% dplyr::left_join(pob[c("cod_dpto", "n")], 
                                       by = c("cod" = "cod_dpto")) %>%
-  dplyr::left_join(ing, by = c("cod" = "cod"))
+  dplyr::left_join(ing, by = c("cod" = "cod")) %>%
+  dplyr::left_join(ocup, by = c("cod" = "cod"))
+
+
+dpto_data$tasa_nbi <- as.numeric(gsub(",", ".", dpto_data$tasa_nbi))
+dpto_data$tasa_miseria <- as.numeric(gsub(",", ".", dpto_data$tasa_miseria))
+dpto_data$comp_vivi <- as.numeric(gsub(",", ".", dpto_data$comp_vivi))
+dpto_data$comp_servi <- as.numeric(gsub(",", ".", dpto_data$comp_servi))
+dpto_data$comp_hacin <- as.numeric(gsub(",", ".", dpto_data$comp_hacin))
+dpto_data$comp_inasist <- as.numeric(gsub(",", ".", dpto_data$comp_inasist))
+dpto_data$comp_dep_eco <- as.numeric(gsub(",", ".", dpto_data$comp_dep_eco))
+dpto_data$n <- as.numeric(gsub(",", ".", dpto_data$n))
+dpto_data$ingresos_totales <- as.numeric(gsub(",", ".", dpto_data$ingresos_totales))
+dpto_data$ingresos_corrientes <- as.numeric(gsub(",", ".", dpto_data$ingresos_corrientes))
+dpto_data$corr_tot <- as.numeric(gsub(",", ".", dpto_data$corr_tot))
+dpto_data$ocupacion_dpto <- as.numeric(gsub(",", ".", dpto_data$ocupacion_dpto))
+
+
+writexl::write_xlsx(dpto_data, "CNPV_2018\\Dataset_DPTO_CNPV2018.xlsx")
 
 ##---------------------------------------##
 ## Visualizar NBI en mapas               ##
@@ -54,6 +94,15 @@ dpto_shape <- dpto_shape %>%
     NOMBRE_DPT_clean == "ARCHIPIELAGO DE SAN ANDRES, PROVIDENCIA Y SANTA CATALINA" ~ "ARCHIPIELAGO DE SAN ANDRES",
     TRUE ~ NOMBRE_DPT_clean
   ))
+
+dpto_shape$ID = dpto_shape$ID_ESPACIA
+dpto_shape$DPTO = dpto_shape$NOMBRE_DPT_clean
+dpto_shape$AREA = dpto_shape$AREA_OFICI
+
+st_write(dpto_shape[c("ID",
+                      "DPTO",
+                      "AREA",
+                      "geometry")], "SpatialData\\dptos_col\\clean2_dpto_shape.shp")
 
 # Unir las bases de datos
 dpto_merged <-  dpto_shape[c("ID_ESPACIA",

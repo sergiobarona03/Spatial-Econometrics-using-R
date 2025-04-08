@@ -3,6 +3,8 @@ library(tidyverse)
 library(stringi)
 library(janitor)
 
+setwd("C:\\Users\\Portatil\\Desktop\\Spatial-Econometrics-using-R\\CNPV_2018\\")
+
 # Función de normalización avanzada
 normalizar_nombres <- function(x) {
   x %>%
@@ -18,7 +20,7 @@ normalizar_nombres <- function(x) {
 
 # Mapeo completo de municipios
 mapeo_municipios <- c(
-  "LA VICTORIA" = "LA VICTORIA (PACOA)",
+  "LA VICTORIA" = "LA VICTORIA (ANM)",
   "MIRITI PARANA" = "MIRITI-PARANA (CAMPOAMOR)",
   "MIRITIPARANA" = "MIRITI-PARANA (CAMPOAMOR)",
   "PUERTO NARINO" = "PUERTO NARIÑO",
@@ -80,7 +82,11 @@ mapeo_municipios <- c(
   "JORDAN SUBE" = "JORDÁN SUBE",
   "PANAPANA" = "PANÁ-PANÁ (CAMPO ALEGRE)",
   "PROVIDENCIA" = "PROVIDENCIA Y SANTA CATALINA",
-  
+  "SANTACRUZ" = "SANTA CRUZ (GUACHAVÉS)",
+  "SAN ANDRES SOTAVENTO" = "SAN ANDRÉS SOTAVENTO",
+  "VILLAGOMEZ" = "VILLAGÓMEZ",
+  "SANTANDER" = "PUERTO SANTANDER",
+  "SAN ANDRES" = "SAN ANDRÉS DE CUERQUÍA"
 )
 
 # Mapeo de departamentos
@@ -118,6 +124,9 @@ ocup <- readxl::read_excel("oc_mun_dane.xlsx") %>%
   ) %>%
   mutate(nom_mun_norm = recode(nom_mun_norm, !!!mapeo_municipios))
 
+# Solucionar un caso manual
+ocup$nom_mun_norm[ocup$nom_mun_norm == "SAN ANDRÉS DE TUMACO"] = "TUMACO"
+
 # Realizar el merge final
 ocup_cods <- merge(
   ocup %>% distinct(nom_dpto_norm, nom_mun_norm, .keep_all = TRUE),
@@ -127,17 +136,26 @@ ocup_cods <- merge(
 ) %>%
   arrange(nom_dpto_norm, nom_mun_norm)
 
-# Identificar y reportar casos faltantes
-problemas_final <- ocup_cods %>%
-  filter(is.na(cod_mun) | is.na(percent_en_el_municipio)) %>%
-  select(nom_dpto_norm, nom_mun_norm) %>%
-  distinct()
+# Guardar conjunto de datos final
+dataset_final <- ocup_cods %>% select(cod_dpto, 
+                                      nom_dpto_norm, cod_mun,
+                                      nom_mun_norm, cod,
+                                      percent_en_el_municipio) %>% na.omit()
 
-if(nrow(problemas_final) > 0) {
-  message("Casos que requieren atención manual (", nrow(problemas_final), "):")
-  print(problemas_final)
-} else {
-  message("¡Merge completado exitosamente! Todas las coincidencias encontradas.")
-}
+# Verificar que no existan duplicados
+test1 <- dplyr::count(dataset_final, nom_dpto_norm, nom_mun_norm) %>%
+  filter(n != 1)
+
+# Verificar que no existen valores repetidos en el código y la tasa de ocupación
+test_cod <- dplyr::count(dataset_final, cod) %>%
+  filter(n != 1)
+
+test_u <- dplyr::count(dataset_final, percent_en_el_municipio) %>%
+  filter(n != 1)
+
+View(dataset_final %>% filter(percent_en_el_municipio %in% test_u$percent_en_el_municipio))
+
+# Guardar conjunto de datos final
+writexl::write_xlsx(dataset_final, "OCUP_MUN_CNPV2018.xlsx")
 
 
