@@ -4,7 +4,7 @@ author:
 - Presentado por \newline
 - Mauricio Quiñones Domínguez, Ph.D. Política Pública \newline
 - Profesor Dpto. de Economía Universidad Javeriana Cali \newline
-- En conjunto con \newline
+- Elaboración conjunta con \newline
 - Sergio Barona, Coordinador Laboratorio de Economía Aplicada - LEA \newline
 date: "29 y 30 de abril"
 output:
@@ -25,7 +25,19 @@ header-includes:
 - \AtBeginSection{}
 ---
 
-<font face="" size = 5> 
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+options(repr.plot.width = 16, repr.plot.height = 16)
+```
+
+```{r, echoes = FALSE, include=TRUE, warning=FALSE, message=FALSE}
+library(tidyverse)
+library(RColorBrewer)
+library(classInt)
+library(sf)
+library(spdep)
+library(kableExtra)
+```
 
 # **Presentación del Curso**
 
@@ -55,7 +67,6 @@ Sugerencia
 
 - Guarda los archivos y tu trabajo en 1 carpeta. 
 
----
 
 # **Motivación: por qué se considera que se debe tener en cuenta la distribución en el espacio para la modelación econométrica**
 
@@ -67,14 +78,12 @@ Sugerencia
 	
 	ii. Las áreas de observación son generalmente de diferentes tamaños. Heterogeneidad $\rightarrow$ Heterocedasticidad.
 
+<center>
+
 ![](C:/Users/Portatil/Desktop/Spatial-Econometrics-using-R/spatecon_images/leyNewton.png){#id .class width=65% height=65%}
 
-	
-![](C:/Users/Portatil/Desktop/Spatial-Econometrics-using-R/spatecon_images/mapa_bogota.png){#id .class width=65% height=65%}
+</center>
 
-![](C:/Users/Portatil/Desktop/Spatial-Econometrics-using-R/spatecon_images/mapa_bogota_2.png){#id .class width=65% height=65%}
-
----
 
 ## _Heterogeneidad espacial vs Autocorrelación Espacial_
 
@@ -117,7 +126,6 @@ Sugerencia
 
   - Aceptamos que los efectos estructurales puramente espaciales pueden ser parte de la especificación de nuestro modelo.
 
----
 
 ## Autocorrelación Espacial 
 
@@ -166,9 +174,9 @@ Sugerencia
 
 - **Modifiable Analysis Unit Problem o MAUP (Problema de la unidad de área modificable)**
 		- “Los usuarios habituales de correlaciones ecológicas saben que el tamaño del coeficiente depende en gran medida del número de subáreas. …[E]l tamaño de la correlación ecológica ...aumentará numéricamente a medida que se produzca la consolidación de áreas más pequeñas en áreas más grandes...”. (Robinson, págs. 357-8).
-
----
-
+		
+		
+		
 # **Definición de la matriz de pesos espaciales**
 	
 - La matriz de pesos espaciales $W$ contiene las ponderaciones para cada unidad geográfica, con base en algún criterio de valoración. El insumo principal para su construcción es la matriz de **distancias**.
@@ -179,23 +187,39 @@ Sugerencia
 
 - Matriz criterio Reina, torre o alfil. Estos términos se explican por sí solos y se refieren a qué tipos de celdas adyacentes elegimos incluir como "vecinas".
 
+<center>
+
 ![](C:/Users/Portatil/Desktop/Spatial-Econometrics-using-R/spatecon_images/imagen6.png){#id .class width=100% height=85%}
+
+</center>
 
 - Usando la matriz reina, para una distancia definida, la matriz $W$ se llena con ceros y unos para cumplir el criterio de cercanía.
 
 - $W$ o “Matriz de contigüidad” – un término general que identifica vecinos con 1 y no vecinos con 0.
 
+<center>
+
 ![](C:/Users/Portatil/Desktop/Spatial-Econometrics-using-R/spatecon_images/fig_mat_ones.png){#id .class width=70% height=70%}
+
+</center>
 
 - Luego se debe normalizar a la unidad por cada fila. Es una matriz no-negativa donde la suma por fila es igual a uno.
 
 - “Matriz de ponderaciones”: casi siempre reservaremos este término para referirnos a una matriz de contigüidad estandarizada por filas, con ponderaciones: 0 $\le$ $w_{ij}$ $\le$ 1
 
+<center>
+
 ![](C:/Users/Portatil/Desktop/Spatial-Econometrics-using-R/spatecon_images/fig_mat_w.png){#id .class width=70% height=70%}
+
+</center>
 
 - Por lo tanto, se obtiene una matriz $W$ de dimensiones $N$ x $N$, en este caso $7$ x $7$, que será usada para "rezagar" espacialmente las variables de interés, de acuerdo al tipo de modelación.
 
+<center>
+
 ![](C:/Users/Portatil/Desktop/Spatial-Econometrics-using-R/spatecon_images/fig_mat_wij.png){#id .class width=70% height=70%}
+
+</center>
 
 - Hay muchas variedades de matrices de pesos.
 
@@ -212,35 +236,14 @@ Sugerencia
 
 - Puede editar $W$ en un editor de texto general.
 
-**Matriz $W$**
+# Aplicación: distribución espacial de NBI
 
-```{r loading libryries, fig.cap="", results='show', warning=FALSE, message=FALSE, echo=TRUE}
-library(tidyverse)
-library(spdep)
-library(spatialreg)
-library(classInt)
-library(car)
-library(lmtest)
-library(sp)
-library(spatstat)
-library(RColorBrewer)
-library(StatDA) 
-library(sf)
-library(MASS)
-library(ggpubr)
-library(moments)
-library(nortest)
-library(ggpubr)
-library(stargazer)
-library(flextable)
-```
+## Conjunto de datos y variables independientes
 
-```{r primeros mapas, fig.cap="", results='show', warning=FALSE, message=FALSE, echo=TRUE}
-
+```{r primeros mapas 1, fig.cap="", results='show', warning=FALSE, message=FALSE, echo=TRUE}
 # Cargar marco de datos
 setwd("C:/Users/Portatil/Desktop/Spatial-Econometrics-using-R/")
-
-dpto.data <- readxl::read_excel("CNPV_2018\\Dataset_DPTO_CNPV2018.xlsx")
+dpto.data <- readxl::read_excel("CNPV_2018//Dataset_DPTO_CNPV2018.xlsx")
 
 library(knitr)
 library(kableExtra)
@@ -249,7 +252,7 @@ library(kableExtra)
 head(dpto.data)
 ```
 
-```{r primeros mapas, fig.cap="", results='show', warning=FALSE, message=FALSE, echo=TRUE}
+```{r primeros mapas 2, fig.cap="", results='show', warning=FALSE, message=FALSE, echo=TRUE}
 numeric_cols <- dpto.data[, sapply(dpto.data, is.numeric)]
 numeric_cols <- numeric_cols %>% dplyr::select(-cod)
 
@@ -286,10 +289,62 @@ stats$Variable = factor(stats$Variable,
 # Presenta las estadísticas en una tabla
 kable(stats, caption = "Resumen descriptivo (n = 33)", digits = 2, row.names = F)
 
+```
+
+## Distribución espacial de NBI
+
+```{r mapa 1, fig.cap="", results='show', warning=FALSE, message=FALSE, echo=TRUE}
+# Datos vectoriales
+
+dpto_shape <- st_read(dsn = "SpatialData/dptos_col/",
+                      layer = "clean2_dpto_shape")
+
+# Unir las bases de datos
+dpto_merged <-  dpto_shape[c("ID",
+                             "DPTO",
+                             "AREA",
+                             "geometry")] %>%
+  left_join(dpto.data[c("dpto_clean", "dpto", "tasa_nbi",
+                        "tasa_miseria", "comp_vivi",
+                        "comp_servi", "comp_hacin",
+                        "comp_inasist", "comp_dep_eco",
+                        "n", "ingresos_totales",
+                        "ingresos_corrientes", "corr_tot")],
+            by = c("DPTO" = "dpto_clean"))
+
+# Por simplicidad, se omite San Andrés
+dpto_merged <- dpto_merged %>% filter(DPTO != "ARCHIPIELAGO DE SAN ANDRES")
+
+
+# Variable de interés: tasa NBI
+summary(dpto_merged$tasa_nbi)
+min(dpto_merged$tasa_nbi)      
+max(dpto_merged$tasa_nbi)      
+
+# Se presenta el mapa sobre NBI
+colors <- brewer.pal(5, "YlOrBr")  
+color.cat.reg<-classIntervals(dpto_merged$tasa_nbi, n=5, style="quantile", dataPrecision=2)
+colcode <- findColours(color.cat.reg, colors)
 
 ```
 
----
+```{r I Moran 1, fig.cap="", results='show', warning=FALSE, message=FALSE, echo=TRUE}
+# Figura 1
+ggplot(data = dpto_merged) +
+  geom_sf(aes(fill = tasa_nbi), color = "black", size = 0.2) + 
+  scale_fill_gradientn(colors = c("#1a9850", "#fee08b", "#d73027"), 
+                       values = c(0, 0.5, 1), 
+                       name = "Tasa NBI (%)") + 
+  theme_bw() + 
+  labs(title = "Distribucion espacial del NBI por Departamento (% en NBI)",
+       caption = "Fuente: DANE. CNPV-2018.") +
+  theme(axis.text = element_blank(),
+        axis.ticks = element_blank(),
+        panel.grid = element_blank(),
+        legend.position = "right",  
+        legend.background = element_rect(fill = "white", color = "black"))
+
+```
 
 # **Interpretación de los resultados e índices que componen el análisis de modelación espacial**
 
@@ -336,9 +391,12 @@ $$
 	- Los valores observados en una ubicación no dependen de los valores observados en ubicaciones vecinas.
 	- El patrón espacial de valores observado es igual de probable que cualquier otro patrón espacial.
 	- La ubicación de los valores puede modificarse sin que ello afecte al contenido informativo de los datos.
-	
+
+<center>
+
 ![](C:/Users/Portatil/Desktop/Spatial-Econometrics-using-R/spatecon_images/imagen1.png){#id .class width=70% height=70%}
 
+</center>
 
 - Valor esperado de la I de Moran bajo la hipótesis de ausencia de autocorrelación espacial:
 
@@ -363,18 +421,23 @@ $$t=\frac{I - E(I)}{\sqrt{Var(I)}}$$
 - Recuerdan **Modifiable Analysis Unit Problem o MAUP (Problema de unidad de área modificable)**?.
 
 Las medidas de autocorrelación espacial dependen de la escala
+
+<center>
+
 ![](C:/Users/Portatil/Desktop/Spatial-Econometrics-using-R/spatecon_images/imagen10.png){#id .class width=70% height=70%}
+
+</center>
 
 ### **Ejercicio: Necesidades Básicas Insatisfechas (NBI) 2018**
 
 ```{r I Moran, fig.cap="", results='show', warning=FALSE, message=FALSE, echo=TRUE}
 # Datos vectoriales
-dpto_shape <- st_read(dsn = "SpatialData\\dptos_col\\",
+dpto_shape <- st_read(dsn = "SpatialData/dptos_col/",
                       layer = "clean2_dpto_shape")
 
 # Unir las bases de datos
 dpto_merged <-  dpto_shape %>%
-  dplyr::left_join(dpto_data[c("dpto_clean", "dpto", "tasa_nbi",
+  dplyr::left_join(dpto.data[c("dpto_clean", "dpto", "tasa_nbi",
                         "tasa_miseria", "comp_vivi",
                         "comp_servi", "comp_hacin",
                         "comp_inasist", "comp_dep_eco",
@@ -398,25 +461,7 @@ colcode <- findColours(color.cat.reg, colors)
 
 ```
 
-```{r I Moran, fig.cap="", results='show', warning=FALSE, message=FALSE, echo=TRUE}
-# Figura 1
-ggplot(data = dpto_merged) +
-  geom_sf(aes(fill = tasa_nbi), color = "black", size = 0.2) + 
-  scale_fill_gradientn(colors = c("#1a9850", "#fee08b", "#d73027"), 
-                       values = c(0, 0.5, 1), 
-                       name = "Tasa NBI (%)") + 
-  theme_bw() + 
-  labs(title = "Distribucion espacial del NBI por Departamento (% en NBI)",
-       caption = "Fuente: DANE. CNPV-2018.") +
-  theme(axis.text = element_blank(),
-        axis.ticks = element_blank(),
-        panel.grid = element_blank(),
-        legend.position = c(0.15, 0.9),  
-        legend.background = element_rect(fill = "white", color = "black"))
-
-```
-
-```{r I Moran, fig.cap="", results='show', warning=FALSE, message=FALSE, echo=TRUE}
+```{r I Moran 2, fig.cap="", results='show', warning=FALSE, message=FALSE, echo=TRUE}
 # Figura 2
 # Visualizar la variable "tasa_nbi" a partir de intervalos
 dpto_merged$tasa_nbi_cat <- cut(dpto_merged$tasa_nbi, 
@@ -442,13 +487,13 @@ map_nbi <- ggplot(data = dpto_merged) +
   theme(axis.text = element_blank(),
         axis.ticks = element_blank(),
         panel.grid = element_blank(),
-        legend.position = c(0.15, 0.88),  
+        legend.position = "right",  
         legend.background = element_rect(fill = "white", color = "black"))
 map_nbi
 
 ```
 
-```{r I Moran, fig.cap="", results='show', warning=FALSE, message=FALSE, echo=TRUE}
+```{r I Moran 3, fig.cap="", results='show', warning=FALSE, message=FALSE, echo=TRUE}
 # Revisión de las conexiones o links del shapefile 
 nb_dpto <- poly2nb(dpto_merged)
 nb_dpto
@@ -465,14 +510,13 @@ range(card(nb2_dpto$neighbours))  # Rango (número de vecinos)
 summary(nb2_dpto, zero.policy=T)   # Resumen
 ```
 
-```{r I Moran, fig.cap="", results='show', warning=FALSE, message=FALSE, echo=TRUE}
+```{r I Moran 4, fig.cap="", results='show', warning=FALSE, message=FALSE, echo=TRUE}
 # I de Moran
 moran.test(dpto_merged$tasa_nbi, 
            nb2_dpto, alternative="two.sided", zero.policy=T)
 ```
 
-
-
+		
 ## Estadísticos de indicadores locales de asociación espacial (Local indicators of spatial association - **LISA**.
 
 - Medidas locales
@@ -537,12 +581,6 @@ moran.plot(dpto_merged$tasa_nbi, nb2_dpto,
 - $Q_2$ (valores [-], valores cercanos [+]): **L-H**
 - $Q_3$ (valores [+], valores cercanos [-]): **H-L**
 
---- 
-
-![](C:/Users/Portatil/Desktop/Spatial-Econometrics-using-R/spatecon_images/imagen12.png){#id .class width=70% height=70%}
-
-
----
 
 **Análisis exploratorio de datos espaciales (Exploratory Spatial Data Analysis - ESDA)**
 
@@ -568,10 +606,6 @@ moran.plot(dpto_merged$tasa_nbi, nb2_dpto,
 
 - Nuestro objetivo es modelar y extraer inferencias adecuadas sobre un proceso generador de datos aleatorio y no observado.
 
-
----
-
-
 # **Los modelos más frecuentes para la modelación espacial (Modelos: SAR, SEM y otros)**
 
 ## ¿El objetivo es ...?
@@ -583,7 +617,10 @@ moran.plot(dpto_merged$tasa_nbi, nb2_dpto,
 
 - **Punto de Partida: MODELO MÍNIMOS CUADRADOS ORDINARIOS - MCO**
 
+<center>
+
 ![Regresión estándar MCO](C:/Users/Portatil/Desktop/Spatial-Econometrics-using-R/spatecon_images/imagen18.png){#id .class width=100% height=85%}
+</center>
 
 $$
 y_i = \beta_0 + \beta_1 x_{1i} + \beta_2 x_{2i} + ... + \beta_k x_{ki} + \varepsilon_i
@@ -671,9 +708,6 @@ $$
 setwd("C:/Users/Portatil/Desktop/Spatial-Econometrics-using-R/")
 mun.data <- readxl::read_excel("CNPV_2018/Dataset_MUN_CNPV2018.xlsx")
 
-# Eliminar filas sin información
-mun.data <- mun.data %>% na.omit()
-
 # Selección de columnas numéricas
 numeric_cols <- mun.data[, sapply(mun.data, is.numeric)]
 numeric_cols <- numeric_cols %>% dplyr::select(-c("cod_dpto", "cod"))
@@ -713,10 +747,12 @@ kable(stats, caption = "Resumen descriptivo (n = 33)", digits = 2, row.names = F
 
 ```
 
-```{r maps, fig.cap="", results='show', warning=FALSE, message=FALSE, echo=TRUE}
+```{r maps2, fig.cap="", results='show', warning=FALSE, message=FALSE, echo=TRUE}
 # Cargar mapa
 # Leer dpto_shape
 setwd("C:/Users/Portatil/Desktop/Spatial-Econometrics-using-R/")
+
+# Unir las bases de datos
 mun_shape <- st_read(dsn = "SpatialData\\DANE_geodata\\",
                       layer = "MGN_ANM_MPIOS") %>% mutate(
                         cod = as.numeric(
@@ -728,8 +764,6 @@ mun_merged <-  mun_shape[c("cod",
                              "geometry")] %>%
   left_join(mun.data,by = c("cod" = "cod"))
 
-# Eliminar región sin vecinos
-mun_merged = mun_merged[-c(629, 630),]
 
 # Figura 3:
 library(viridis)
@@ -745,11 +779,11 @@ ggplot(data = mun_merged) +
   theme(axis.text = element_blank(),
         axis.ticks = element_blank(),
         panel.grid = element_blank(),
-        legend.position = c(0.15, 0.9),  
+        legend.position = "right",  
         legend.background = element_rect(fill = "white", color = "black"))
 ```
 
-```{r maps, fig.cap="", results='show', warning=FALSE, message=FALSE, echo=TRUE}
+```{r maps3, fig.cap="", results='show', warning=FALSE, message=FALSE, echo=TRUE}
 
 # Figura 4:
 mun_merged$tasa_nbi_cat <- cut(mun_merged$tasa_nbi, 
@@ -775,13 +809,20 @@ map_nbi <- ggplot(data = mun_merged) +
   theme(axis.text = element_blank(),
         axis.ticks = element_blank(),
         panel.grid = element_blank(),
-        legend.position = c(0.15, 0.88),  
+        legend.position = "bottom",  
         legend.background = element_rect(fill = "white", color = "black"))
 map_nbi
 
 ```
 
-```{r maps, fig.cap="", results='show', warning=FALSE, message=FALSE, echo=TRUE}
+```{r maps4, fig.cap="", results='show', warning=FALSE, message=FALSE, echo=TRUE}
+# Revisión de las conexiones o links del shapefile 
+nb_mun <- poly2nb(mun_merged)
+nb_mun
+
+# Eliminar regiones sin enlaces
+mun_merged <- mun_merged[-c(629, 630),]
+
 # Revisión de las conexiones o links del shapefile 
 nb_mun <- poly2nb(mun_merged)
 nb_mun
@@ -805,22 +846,7 @@ moran.test(mun_merged$tasa_nbi,
            nb2_mun, alternative="two.sided", zero.policy=T)
 ```
 
-```{r maps, fig.cap="", results='show', warning=FALSE, message=FALSE, echo=TRUE}
-# Se presenta el mapa sobre  bg.df$Rate. Seleccionar la paleta
-library(RColorBrewer)
-library(classInt)
-
-colors <- brewer.pal(5, "YlOrBr")  
-color.cat.reg<-classIntervals(dpto_merged$tasa_nbi, n=5, 
-                              style="quantile", dataPrecision=2)
-colcode <- findColours(color.cat.reg, colors)
-
-## Figura: Distribución espacial del NBI (%)
-par(mfrow=c(1,1))
-plot(mun_merged[c("tasa_nbi", "geometry")], col=colcode)
-title('Distribucion tasa NBI (%)')
-legend('topleft', legend=c(names(attr(colcode, 'table'))), fill=c(attr(colcode, 'palette')), 
-       title='NBI (%)')
+```{r maps5, fig.cap="", results='show', warning=FALSE, message=FALSE, echo=TRUE}
 
 # Moran plot
 moran.plot(mun_merged$tasa_nbi, nb2_mun, 
@@ -832,11 +858,19 @@ moran.plot(mun_merged$tasa_nbi, nb2_mun,
 
 ```{r MCO, fig.cap="", results='show', warning=FALSE, message=FALSE, echo=TRUE}
 
+# Para el análisis, se eliminan los valores faltantes
+mun_merged2 = mun_merged %>% filter(!is.na(corr_tot) &
+                                    !is.na(n) & !is.na(area_km) &
+                                     !is.na(ocup_rate))
+
+# Eliminar regiones sin enlaces
+mun_merged2 <- mun_merged2[-c(202, 205),]
+
 # Logaritmo natural de la tasa
-mun_merged$tasa_nbi <- log(mun_merged$tasa_nbi)
+mun_merged2$log_nbi <- log(mun_merged2$tasa_nbi)
 
 # Se propone una regresión lineal múltiple con las siguientes variables
-reg_mco <- lm(tasa_nbi ~  n + corr_tot + log(area_km) + ocup_rate, data=mun_merged)
+reg_mco <- lm(log_nbi ~  n + corr_tot + log(area_km) + ocup_rate, data=mun_merged2)
 summary(reg_mco)
 
 reg_mco_res <- reg_mco$residuals
@@ -891,10 +925,23 @@ abline(h=0)
 # Usemos una prueba formal:
 library(lmtest)
 bptest(reg_mco) # No se rechaza Ho (Homocedasticidad)
+```
+
+
+```{r MCO resid, fig.cap="", results='show', warning=FALSE, message=FALSE, echo=TRUE}
+
 
 #----------------------------------------------#
 # Se verifica la independencia de los residuos #
 #----------------------------------------------#
+
+# Se define nuevamente la matriz de pesos
+nb_mun <- poly2nb(mun_merged2)
+nb_mun
+
+# Se crea la matriz W
+nb2_mun<- nb2listw(nb_mun)
+summary(nb2_mun)
 
 # Véase la información de los pesos de la matriz
 names(attributes(nb2_mun))  # Nombres de los atributos
@@ -913,17 +960,16 @@ colcode <- findColours(color.cat.reg, colors)
 
 ## Figura
 par(mfrow=c(1,1))
-plot(bg_data[c("UTAM", "geometry")], col=colcode)
+plot(mun_merged2[c("nom_mun", "geometry")], col=colcode)
 title('Map of Regression Residuals')
 legend('topleft', legend=c(names(attr(colcode, 'table'))), fill=c(attr(colcode, 'palette')), 
        title='Regression Residuals')
 
-moran.plot(reg_mco$residuals, nb2_mun, zero.policy=T, labels=as.character(mun_merged$nom_mun),
+moran.plot(reg_mco$residuals, nb2_mun, zero.policy=T, labels=as.character(mun_merged2$nom_mun),
            xlab=NULL, ylab=NULL, type="p", col="#AE017E",
            cex=0.8, pch=1)
 ```
-
-
+  
 ## Modelo espacial autorregresivo (SAR) - Spillovers o efectos derramamiento
 
 - Incorpora dependencia espacial agregando un "rezago espacial" a la variable dependiente en el lado derecho de la ecuación de regresión.
@@ -932,7 +978,7 @@ moran.plot(reg_mco$residuals, nb2_mun, zero.policy=T, labels=as.character(mun_me
 	- Los valores de $y$ en un área están directamente influenciados por los valores de $y$ encontrados en áreas vecinas.
 	- Depende de cómo definimos el vecindario.
 
-![](C:/Users/Portatil/Desktop/Spatial-Econometrics-using-R/spatecon_images/imagen15.png){#id .class width=30% height=30%}
+![](C:/Users/Portatil/Desktop/Spatial-Econometrics-using-R-main/spatecon_images/imagen15.png){#id .class width=30% height=30%}
 
 
 $$
@@ -943,7 +989,6 @@ $$
 
 
 - Efectos marginales son:
-
 
 $$
 \frac{\partial \boldsymbol{y}}{\partial \boldsymbol{X}} = [\boldsymbol{I} - \boldsymbol{W}\rho]^{-1}\boldsymbol{I}\beta 
@@ -959,218 +1004,13 @@ $$
 
 - Se estima por el método de Máxima Verosimilitud.
 
-
 ```{r SAR, fig.cap="", results='show', warning=FALSE, message=FALSE, echo=TRUE}
 
-bg.lag.eig <- spatialreg::lagsarlm(lograte ~  mean_size + minor + elder
-                       + ingresos_bajos + higher,
-                       data=bg_data2, bgQ1.gal, method="eigen", quiet=FALSE)
-summary(bg.lag.eig)
+model.lag.eig <- spatialreg::lagsarlm(log_nbi ~  n + corr_tot + log(area_km) + ocup_rate,
+                       data=mun_merged, nb2_mun, method="eigen", quiet=FALSE)
+summary(model.lag.eig)
 
-bg.lag.eig.imp <- impacts(bg.lag.eig, listw = bgQ1.gal, R = 999)
-summary(bg.lag.eig.imp, zstats = TRUE, short = TRUE)
-
-```
-
-
-## Modelo de error espacial (SEM) - Heterogeneidad espacial u omisión de variables
-
-- Examina la autocorrelación espacial entre los residuos de áreas adyacentes.
-
-- Trata la correlación espacial principalmente como un problema.
-	- Desestima la idea de que la correlación espacial pueda reflejar algún proceso significativo.
-	
-- El error espacial positivo puede reflejar:
-	- Un modelo mal especificado (particularmente una variable omitida que está espacialmente desordenada).
-	- Unidad espacial de agregación incorrecta.
-	
-![](C:/Users/Portatil/Desktop/Spatial-Econometrics-using-R/spatecon_images/imagen16.png){#id .class width=30% height=30%}
-
-
-$$
-\boldsymbol{y}= \boldsymbol{X} \beta + \boldsymbol{u} \\
-$$
-
-$$
-\boldsymbol{u} = \lambda \boldsymbol{Wu} + \boldsymbol{\varepsilon}  \\
-\boldsymbol{u} = [\boldsymbol{I} - \boldsymbol{W}\lambda]^{-1}\boldsymbol{\varepsilon}
-$$
-
-- Reemplazo en estructural,
-
-$$
-\boldsymbol{y}= \boldsymbol{X} \beta + [\boldsymbol{I} - \boldsymbol{W}\lambda]^{-1}\boldsymbol{\varepsilon} \\
-$$
-
-- Efectos marginales son:
-
-
-$$
-\frac{\partial \boldsymbol{y}}{\partial \boldsymbol{X}} = \boldsymbol{I}\beta 
-$$
-
-- Se estima por el método de Máxima Verosimilitud.
-
-```{r SEM, fig.cap="", results='show', warning=FALSE, message=FALSE, echo=TRUE}
-
-bg.err.eig <- spatialreg::errorsarlm(lograte ~  mean_size + minor + elder
-                                     + ingresos_bajos + higher,
-                         data=bg_data2, bgQ1.gal, method="eigen", quiet=FALSE)
-summary(bg.err.eig)
-
-stargazer(reg_mco, bg.lag.eig, bg.err.eig, type = "html", title="Results", align=TRUE)
-```
-
-
----
-
-# **Test de identificación del tipo de modelación espacial**
-
-## Elegir entre modelos: AIC y SC
-
-- AIC = -2L + 2k
-	- donde L es la log-verosimilitud y k es el número de parámetros del modelo.
-
-- SC = -2L + kln(N) (también conocido como BIC)
-	- donde N es el número de observaciones
-	
-## Comentarios técnicos
-
-Pasos para determinar el grado de autocorrelación espacial de los datos y ejecutar una regresión espacial:
-
-1. Elija un criterio de vecindad ¿Qué zonas están relacionadas?
-
-2. Asigne ponderaciones a las zonas que están vinculadas
-
-3. Crear una matriz de ponderaciones espaciales
-
-4. Ejecutar una prueba estadística para examinar la autocorrelación espacial
-
-5. Ejecutar una regresión MCO
-
-6. Determinar qué tipo de regresión espacial ejecutar
-
-7. Ejecutar una regresión espacial
-
-8. Aplicar la matriz de pesos
-
-
-```{r test LM, fig.cap="", results='show', warning=FALSE, message=FALSE, echo=TRUE}
-
-# Test de multiplicadores de Lagrange (i.e. GeoDa-style Lagrange multiplier tests)
-lm.LMtests(reg_mco, bgQ1.gal, test=c("LMerr", "LMlag", "RLMerr", "RLMlag"))
-
-# Veamos la comparación de la autocorrelación en los residuos
-moran.test(reg_mco$residuals, bgQ1.gal, alternative="two.sided")
-moran.test(bg.lag.eig$residuals, bgQ1.gal, alternative="two.sided")
-moran.test(bg.err.eig$residuals, bgQ1.gal, alternative="two.sided")
-
-# REVISAR CONCLUSIÓN: Lag, SARAR, & SDM all pretty good.  Error is OK.  The rest: not so much.
-
-# Veamos la comparación según los criterios de información
-AIC(reg_mco)       # 26.12001
-AIC(bg.lag.eig)    # 18.69224
-AIC(bg.err.eig)    # 25.15315
-
-BIC(reg_mco)       # 44.76408
-BIC(bg.lag.eig)    # 39.99975
-BIC(bg.err.eig)    # 46.46066
-
-# El modelo SARAR tiene el menor AIC, pero la diferencia
-# con el lag model y SDM no es significativa.
-```
-
-# **(OPCIONAL) Otros modelos: SLX y SAC**
-
-## Modelo de rezago Espacial de las X's (SLX)
-
-
-
-$$
-\boldsymbol{y}= \boldsymbol{X} \beta + \boldsymbol{WX} \theta + \boldsymbol{\varepsilon} \\
-$$
-
-```{r SLX, fig.cap="", results='show', warning=FALSE, message=FALSE, echo=TRUE}
-
-bg.slx.eig <- spatialreg::lmSLX(lograte ~  mean_size + minor + elder
-                                     + ingresos_bajos + higher,
-                         data=bg_data2, bgQ1.gal)
-summary(bg.slx.eig)
+model.lag.eig.imp <- impacts(model.lag.eig, listw = nb2_mun, R = 999)
+summary(model.lag.eig.imp, zstats = TRUE, short = TRUE)
 
 ```
-
-
-## Modelo Espacial Autorregresión combinado (SAC)
-
-$$
-\boldsymbol{y}= \rho \boldsymbol{Wy} + \boldsymbol{X} \beta + \boldsymbol{u} 
-$$
-
-$$
-\boldsymbol{u} = \lambda \boldsymbol{Wu} + \boldsymbol{\varepsilon}  
-$$
-
-```{r SAC, fig.cap="", results='show', warning=FALSE, message=FALSE, echo=TRUE}
-
-bg.lag.error <- spatialreg::sacsarlm(lograte ~  mean_size + minor + elder
-                         + ingresos_bajos + higher,
-                         data=bg_data2, bgQ1.gal, method = "eigen", quiet=FALSE)
-summary(bg.lag.error)
-
-bg.lag.error.imp <- impacts(bg.lag.error, listw = bgQ1.gal, R = 999)
-summary(bg.lag.error.imp, zstats = TRUE, short = TRUE)
-```
-
-```{r test todos, fig.cap="", results='show', warning=FALSE, message=FALSE, echo=TRUE}
-
-# Test de multiplicadores de Lagrange (i.e. GeoDa-style Lagrange multiplier tests)
-lm.LMtests(reg_mco, bgQ1.gal, test=c("LMerr", "LMlag", "RLMerr", "RLMlag", "SARMA"))
-
-# Veamos la comparación de la autocorrelación en los residuos
-moran.test(reg_mco$residuals, bgQ1.gal, alternative="two.sided")
-moran.test(bg.lag.eig$residuals, bgQ1.gal, alternative="two.sided")
-moran.test(bg.err.eig$residuals, bgQ1.gal, alternative="two.sided")
-moran.test(bg.slx.eig$residuals, bgQ1.gal, alternative="two.sided")
-moran.test(bg.lag.error$residuals, bgQ1.gal, alternative="two.sided")
-
-# Veamos la comparación según los criterios de información
-AIC(reg_mco)       # 26.12001
-AIC(bg.lag.eig)    # 18.69224
-AIC(bg.err.eig)    # 25.15315
-AIC(bg.slx.eig)    # 17.64841
-AIC(bg.lag.error)    # 14.12242
-
-BIC(reg_mco)       # 44.76408
-BIC(bg.lag.eig)    # 39.99975
-BIC(bg.err.eig)    # 46.46066
-BIC(bg.slx.eig)    # 49.60968
-BIC(bg.lag.error)    # 38.09337
-
-```
-
-
-
-**Hay mas**
-
-![](C:/Users/Portatil/Desktop/Spatial-Econometrics-using-R/spatecon_images/imagen_modelos.png){#id .class width=60% height=65%}
-
-
-
-
-![](C:/Users/Portatil/Desktop/Spatial-Econometrics-using-R/spatecon_images/imagen17.png){#id .class width=100% height=85%}
-
-
-
-Tipo de archivos necesarios:
-
-Archivo Shape, extensión .shp. Contiene la información espacial más los atributos. Significa que formarán parte otros ficheros como shx, .dbf, y .prj. Desarrollado por ESRI
-
-# Referencias 
-
-- Root, E. Class Notes. (2015). Introduction to Spatial Regression Analysis. ICPSR Summer Workshop 2015.
-
-- Dubé, J. , & Legros, D. (2014). Spatial econometrics using microdata.
-
-- LeSage, J. P. , & Pace, R. K. (2009). Introduction to spatial econometrics. Boca Raton: CRC Press.
-
-- Bivand, R. , E.J. Pebesma and V. Gomez-Rubio. (2013).  Applied Spatial Data Analysis with R. New York: Springer.

@@ -64,6 +64,8 @@ dpto_data$ingresos_corrientes <- as.numeric(gsub(",", ".", dpto_data$ingresos_co
 dpto_data$corr_tot <- as.numeric(gsub(",", ".", dpto_data$corr_tot))
 dpto_data$ocupacion_dpto <- as.numeric(gsub(",", ".", dpto_data$ocupacion_dpto))
 
+dpto_data <- dpto_data %>%
+  mutate(dpto_clean = str_to_upper(str_trim(stri_trans_general(dpto, "Latin-ASCII"))))
 
 writexl::write_xlsx(dpto_data, "CNPV_2018\\Dataset_DPTO_CNPV2018.xlsx")
 
@@ -76,8 +78,7 @@ dpto_shape <- st_read(dsn = "SpatialData\\dptos_col\\",
 
 # Limpiar los nombres de los departamentos
 library(stringi)
-dpto_data <- dpto_data %>%
-  mutate(dpto_clean = str_to_upper(str_trim(stri_trans_general(dpto, "Latin-ASCII"))))
+
 
 dpto_shape <- dpto_shape %>%
   mutate(NOMBRE_DPT_clean = str_to_upper(str_trim(stri_trans_general(NOMBRE_DPT, "Latin-ASCII"))))
