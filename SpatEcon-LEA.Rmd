@@ -833,10 +833,18 @@ moran.test(mun_merged$tasa_nbi,
 ```{r maps5, fig.cap="", results='show', warning=FALSE, message=FALSE, echo=TRUE}
 
 # Moran plot
-moran.plot(mun_merged$tasa_nbi, nb2_mun, 
-           zero.policy=T, labels=as.character(mun_merged$nom_mun),
-           xlab=NULL, ylab=NULL, type="p", col="#AE017E",
-           cex=1, pch=1)
+mun_a_etiquetar <- c("CARTAGENA", "PANA PANA (ANM)", "GUADALAJARA DE BUGA", "RIOHACHA", "BARRANQUILLA","CALI","PUERTO COLOMBIA", "BUCARAMANGA", "ARAUCA" )
+
+etiquetas <- ifelse(mun_merged$nom_mun %in% mun_a_etiquetar,
+                    as.character(mun_merged$nom_mun), "")
+
+moran.plot(mun_merged$tasa_nbi, nb2_mun,
+           zero.policy = TRUE,
+           labels = etiquetas,
+           xlab = "mun_merged$tasa_nbi",
+           ylab = "spatially lagged mun_merged$tasa_nbi",
+           type = "p", col = "#AE017E", cex = 1, pch = 1)
+
 ```
 
 ```{r MCO, fig.cap="", results='show', warning=FALSE, message=FALSE, echo=TRUE}
@@ -941,11 +949,17 @@ color.cat.reg<-classIntervals(reg_mco$residuals, n=5, style="quantile", dataPrec
 colcode <- findColours(color.cat.reg, colors)
 
 ## Figura
-par(mfrow=c(1,1))
-plot(mun_merged2[c("nom_mun", "geometry")], col=colcode)
-title('Map of Regression Residuals')
-legend('topleft', legend=c(names(attr(colcode, 'table'))), fill=c(attr(colcode, 'palette')), 
-       title='Regression Residuals')
+par(mfrow = c(1, 1))
+plot(mun_merged2["nom_mun"], 
+     col = colcode, 
+     border = "grey40",  
+     lwd = 0.3)           
+title("Map of Regression Residuals")
+legend("topleft",
+       legend = names(attr(colcode, "table")),
+       fill = attr(colcode, "palette"),
+       title = "Regression Residuals")
+
 
 moran.plot(reg_mco$residuals, nb2_mun, zero.policy=T, labels=as.character(mun_merged2$nom_mun),
            xlab=NULL, ylab=NULL, type="p", col="#AE017E",
@@ -1043,7 +1057,7 @@ summary(model.err.eig)
 htmlreg(list(reg_mco, model.lag.eig, model.err.eig),
         file = "OLS_SAR_SEM.html",
         custom.model.names = c("OLS", "SAR", "SEM"),
-        single.row = TRUE)
+        single.row = TRUE) # El resultado se muestra en oro archivo
 
 ```
 
@@ -1051,9 +1065,9 @@ htmlreg(list(reg_mco, model.lag.eig, model.err.eig),
 
 ## Elegir entre modelos: AIC y SC
 
--   AIC = -2L + 2k
+-   AIC = $-2L + 2k$
     -   donde L es la log-verosimilitud y k es el número de parámetros del modelo.
--   SC = -2L + kln(N) (también conocido como BIC)
+-   SC = $-2L + kln(N)$ (también conocido como BIC)
     -   donde N es el número de observaciones
 
 ## Comentarios técnicos
@@ -1093,13 +1107,13 @@ moran.test(model.err.eig$residuals, nb2_mun, alternative="two.sided")
 # REVISAR CONCLUSIÓN: Lag, SARAR, & SDM all pretty good.  Error is OK.  The rest: not so much.
 
 # Veamos la comparación según los criterios de información
-AIC(reg_mco)       # 26.12001
-AIC(model.lag.eig)    # 18.69224
-AIC(model.err.eig)    # 25.15315
+AIC(reg_mco)       # 1358.818
+AIC(model.lag.eig)    # 779.9292
+AIC(model.err.eig)    # 877.2476
 
-BIC(reg_mco)       # 44.76408
-BIC(model.lag.eig)    # 39.99975
-BIC(model.err.eig)    # 46.46066
+BIC(reg_mco)       # 1388.82
+BIC(model.lag.eig)    # 814.9316
+BIC(model.err.eig)    # 912.25
 
 
 ```
@@ -1153,17 +1167,17 @@ moran.test(model.slx.eig$residuals, nb2_mun, alternative="two.sided")
 moran.test(model.lag.error$residuals, nb2_mun, alternative="two.sided")
 
 # Veamos la comparación según los criterios de información
-AIC(reg_mco)       # 26.12001
-AIC(model.lag.eig)    # 18.69224
-AIC(model.err.eig)    # 25.15315
-AIC(model.slx.eig)    # 17.64841
-AIC(model.lag.error)    # 14.12242
+AIC(reg_mco)       # 1358.818
+AIC(model.lag.eig)    # 779.9292
+AIC(model.err.eig)    # 877.2476
+AIC(model.slx.eig)    # 8429.426
+AIC(model.lag.error)    # 7957.535
 
-BIC(reg_mco)       # 44.76408
-BIC(model.lag.eig)    # 39.99975
-BIC(model.err.eig)    # 46.46066
-BIC(model.slx.eig)    # 49.60968
-BIC(model.lag.error)    # 38.09337
+BIC(reg_mco)       # 1388.82
+BIC(model.lag.eig)    # 814.9316
+BIC(model.err.eig)    # 912.25
+BIC(model.slx.eig)    # 8479.429
+BIC(model.lag.error)    # 8479.429
 
 ```
 
@@ -1171,7 +1185,7 @@ BIC(model.lag.error)    # 38.09337
 
 <center>![](C:\Users\danie\OneDrive\Escritorio\Spatial-Econometrics-using-R\spatecon_images\imagen_modelos.png){.class width="60%" height="65%"}</center>
 
-<center>![](C:\Users\danie\OneDrive\Escritorio\Spatial-Econometrics-using-R\spatecon_images\imagen17.png){.class width="100%" height="85%"}</center>
+<center>![](C:\Users\danie\OneDrive\Escritorio\Spatial-Econometrics-using-R\spatecon_images\imagen17.png){.class width="60%" height="75%"}</center>
 
 Tipo de archivos necesarios:
 
@@ -1186,3 +1200,4 @@ Archivo Shape, extensión .shp. Contiene la información espacial más los atrib
 -   LeSage, J. P. , & Pace, R. K. (2009). Introduction to spatial econometrics. Boca Raton: CRC Press.
 
 -   Bivand, R. , E.J. Pebesma and V. Gomez-Rubio. (2013). Applied Spatial Data Analysis with R. New York: Springer.
+

@@ -292,10 +292,15 @@ moran.test(mun_merged$tasa_nbi,
 ```{r maps5, fig.cap="", results='show', warning=FALSE, message=FALSE, echo=TRUE}
 
 # Moran plot
-mun_a_etiquetar <- c("CARTAGENA", "BOGOTA, D.C.", "MEDELLIN", "CALI", "BARRANQUILLA",
-                     "IBAGUE","PUERTO COLOMBIA", "BUCARAMANGA" )
+mun_a_etiquetar <- c("CARTAGENA", "PANA PANA (ANM)", "RIOHACHA", "BARRANQUILLA",
+                     "CALI", "PUERTO COLOMBIA", "BUCARAMANGA", "ARAUCA", "MEDELLÍN",
+                     "BOGOTÁ, D.C.")
 
-etiquetas <- ifelse(mun_merged$nom_mun %in% mun_a_etiquetar,
+mun_merged$nom_mun_limpio <- trimws(toupper(mun_merged$nom_mun))
+mun_a_etiquetar_limpio <- trimws(toupper(mun_a_etiquetar))
+
+
+etiquetas <- ifelse(mun_merged$nom_mun_limpio %in% mun_a_etiquetar_limpio,
                     as.character(mun_merged$nom_mun), "")
 
 moran.plot(mun_merged$tasa_nbi, nb2_mun,
@@ -304,6 +309,7 @@ moran.plot(mun_merged$tasa_nbi, nb2_mun,
            xlab = "mun_merged$tasa_nbi",
            ylab = "spatially lagged mun_merged$tasa_nbi",
            type = "p", col = "#AE017E", cex = 1, pch = 1)
+
 
 ```
 
