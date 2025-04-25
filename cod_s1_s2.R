@@ -350,14 +350,24 @@ summary(nb2_mun, zero.policy=T)   # Resumen
 moran.test(mun_merged$tasa_nbi, 
            nb2_mun, alternative="two.sided", zero.policy=T)
 
-# Generar el gráfico base SIN etiquetas
+# Moran plot
+mun_a_etiquetar <- c("CARTAGENA", "PANA PANA (ANM)", "RIOHACHA", "BARRANQUILLA",
+                     "CALI", "PUERTO COLOMBIA", "BUCARAMANGA", "ARAUCA", "MEDELLÍN",
+                     "BOGOTÁ, D.C.")
+
+mun_merged$nom_mun_limpio <- trimws(toupper(mun_merged$nom_mun))
+mun_a_etiquetar_limpio <- trimws(toupper(mun_a_etiquetar))
+
+
+etiquetas <- ifelse(mun_merged$nom_mun_limpio %in% mun_a_etiquetar_limpio,
+                    as.character(mun_merged$nom_mun), "")
+
 moran.plot(mun_merged$tasa_nbi, nb2_mun,
            zero.policy = TRUE,
-           labels = NA,
+           labels = etiquetas,
            xlab = "mun_merged$tasa_nbi",
            ylab = "spatially lagged mun_merged$tasa_nbi",
            type = "p", col = "#AE017E", cex = 1, pch = 1)
-
 # Calcular los ejes para poner etiquetas selectivas
 x <- mun_merged$tasa_nbi
 y <- lag.listw(nb2_mun, x, zero.policy = TRUE)
