@@ -1,0 +1,606 @@
+---
+title: '**Introducción a la Modelación de Datos Espaciales usando R**'
+author:
+- Presentado por \newline
+- Mauricio Quiñones Domínguez, Ph.D. Política Pública \newline
+- Profesor Dpto. de Economía Universidad Javeriana Cali \newline
+- Elaboración conjunta con \newline
+- Sergio Barona, Coordinador Laboratorio de Economía Aplicada - LEA \newline
+date: "29 de abril"
+output:
+  html_document:
+    toc: yes
+    toc_float:
+      collapsed: yes
+      smooth_scroll: no
+    number_sections: yes
+    theme: spacelab
+    highlight: tango
+  pdf_document:
+    toc: yes
+subtitle: ''
+institute: Universidad Javeriana Cali
+header-includes:
+- \AtBeginEnvironment{CSLReferences}{\tiny}
+- \AtBeginSection{}
+- \AtBeginSection{}
+- |
+    <style>
+      ul, li {
+        font-size: 50px !important;
+      }'
+    </style>
+---
+<font face="" size = 5>
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+options(repr.plot.width = 16, repr.plot.height = 16)
+```
+
+# **Presentación del Curso**
+
+-   🌎 La dimensión espacial que es objeto de análisis en otras disciplinas, afecta también las variables socioeconómicas. 
+
+-   📍 Al integrar la distancia geográfica con la modelación econométrica, se pueden refinar las estimaciones y capturar efectos que antes no eran tenidos en cuenta.
+
+## Objetivos del curso
+
+1.  Presentar por qué se considera que se debe tener en cuenta la distribución en el espacio para la modelación econométrica.
+
+2.  Definir y construir una matriz de pesos espaciales.
+
+3.  Interpretar los resultados e índices que componen el análisis de modelación espacial.
+
+4.  Conocer algunos de los modelos más frecuentes para la modelación espacial (Modelos: SAR, SEM y otros).
+
+5.  Presentar cómo se identifica el tipo de modelación espacial.
+
+## Metodología de aprendizaje
+
+-   Metodología de aprendizaje-enseñanza: "Aprender haciendo"
+
+-   Los datos analizados son de la Distribución espacial del índice de Necesidades Básicas Insatisfechas - NBI.
+
+-   Compartimos shape file y archivo de excel con atributos.
+
+Sugerencia
+
+-   Guarda los archivos y tu trabajo en 1 carpeta.
+
+
+# **Motivación: por qué se considera que se debe tener en cuenta la distribución en el espacio para la modelación econométrica?**
+
+-   **Respuesta: Dependencia espacial**
+
+    i. 🗺️ Primera ley de Geografía de Tobler: “Todo está relacionado con todo lo demás, pero las cosas cercanas están más relacionadas que las distantes”. (1970: 236).
+
+-   **Respuesta: Autocorrelación espacial**
+
+    ii. Las áreas vecinas son similares. Tobler, W. R (1970). "A computer movie simulating urban growth in the Detroit region." Economic Geography 46(2).
+
+
+-   **Respuesta: Heterogeneidad espacial** 
+
+    iii. 🏙️ Las áreas de observación son generalmente de diferentes tamaños. Heterogeneidad $\rightarrow$ Heterocedasticidad.
+
+<center>![](C:/MauricioQD/git/Spatial-Econometrics-using-R/spatecon_images/leyNewton.png){#id .class width="65%" height="65%"}</center>
+
+## *Heterogeneidad espacial vs Autocorrelación Espacial*
+
+-   Los efectos espaciales son propiedades de los datos espaciales que dan como resultado la tendencia de que las observaciones espacialmente próximas de un atributo sean más parecidas que las observaciones más distantes (primera ley de Tobler). Esta agrupación (clustering) en el espacio puede resultar de:
+
+    -   Propiedades inherentes de algunas regiones en el área de estudio que hacen que las unidades analíticas dentro de ellas sean diferentes de las de otras regiones (*heterogeneidad espacial*).
+
+    -   Algún tipo de interacción espacialmente modelada entre unidades vecinas (*autocorrelación espacial*).
+
+    -   Ambos.
+
+### Heterogeneidad espacial: caracterización y causa
+
+-   Se enfoca en la diferenciación de la unidad geográfica (municipio o estado) que se expresa a lo largo de toda la unidad bajo estudio (departamento o país).
+
+-   **No se asume ninguna interacción espacial** en el proceso que genera heterogeneidad espacial. Por el contrario, hace referencia a lo que hace única intrínsecamente a cada ubicación o propiedades compartidas por unidades vecinas.
+
+-   Las observaciones no están distribuidas homogéneamente en el espacio.
+
+-   Variación a gran escala de la media en las unidades geográfica.
+
+-   Los valores de las variables están influenciados por su ubicación en el espacio.
+
+-   Resultado de la interacción de las características únicas de las unidades geográfica y su ubicación espacial.
+
+#### Causas de la heterogeneidad espacial
+
+  -   Patrones de interacción social que crean características únicas de las unidades espaciales.
+
+  -   Regímenes espaciales: legados de las relaciones regionales entre el centro y la periferia $\rightarrow$ diferencias entre unidades (población, PIB, etc.)
+
+  -   Diferencias en las características físicas de las unidades espaciales. Tamaño y topografía diferentes.
+
+-   *Si asumimos que la heterogeneidad espacial es un proceso razonable de generación de datos entonces ...*
+  
+    -   Estamos diciendo que la aparente agrupación de los datos no es el resultado de la interacción espacial entre áreas, no hay influencias vecinas de pequeña escala, **no hay contagio**.
+
+    -   Suponemos que podemos especificar un modelo de regresión con covariables adecuadas de modo que la autocorrelación en los residuos desaparezca.
+
+    -   Aceptamos que los efectos estructurales puramente espaciales pueden ser parte de la especificación de nuestro modelo.
+
+### Autocorrelación espacial: caracterización y causa
+
+-   "… la existencia de una relación funcional entre lo que sucede en un punto del espacio y lo que sucede en otro lugar" (Anselin, 1988:11).
+
+-   Esto significa una falta de independencia entre las observaciones (por definición), pero la “relación funcional” es la clave; es decir, existe interacción entre actores sociales/económicos.
+
+-   Se expresa en nuestros modelos como un proceso espacial de pequeña escala, localizado y de corta distancia.
+
+-   Para el examen de datos en una red espacial irregular (por ejemplo, barrios), este proceso espacial generalmente se maneja a través de la declaración exógena de un **“vecino”** (una región de influencia) definida para cada observación y se operacionaliza mediante una **“matriz de ponderaciones”.**
+
+-   Este proceso se desprende informalmente de la llamada “Primera Ley de la Geografía”, pero es evidente que viola el supuesto de unidades de análisis independientes.
+
+-   *Si asumimos que la autocorrelación producto de la dependencia espacial es un proceso razonable de generación de datos entonces ...*
+
+    -   Estamos diciendo que la agrupación de nuestros datos resulta de algún tipo de interacción espacial, existe influencia entre vecinos de pequeña escala, lo cual requiere definir **vecino** y la **matriz de ponderaciones**).
+
+    -   Creemos que podemos plantear teóricamente razones por las que la agrupación resulta de la interacción espacial o del contagio entre nuestras unidades de observación.
+
+    -   Necesitamos pensar en qué tipo de modelo de dependencia debería introducir mejor los efectos vecinos; muchas opciones.
+
+    -   Existe una relación o covariación localizada entre las medias (u otras estadísticas) dentro de la región.
+
+    -   Tendencia de las medias a "seguirse" en el espacio.
+
+    -   Da lugar a grupos de valores similares.
+
+#### Causas de la autocorrelación espacial
+
+-   El proceso socioeconómico subyacente ha dado lugar a una distribución agrupada de los valores de las variables. Procesos de **agrupación**.
+
+-   Agrupación de personas similares en zonas localizadas. Procesos de **interacción espacial**.
+
+-   Las personas cercanas tienen más probabilidades de interactuar, compartir. Procesos de **difusión**.
+
+-   Los vecinos aprenden unos de otros. Procesos de **dispersión**.
+
+-   La gente se desplaza, pero suelen ser distancias cortas, se llevan consigo sus conocimientos. **Jerarquías espaciales.**
+
+-   Influencias económicas que unen a las personas. Desajuste entre el proceso y las unidades espaciales, distritos frente a zonas de comercio minorista o grupos de bloques censales frente a redes de barrios.
+
+## **Desafíos** 🎯
+
+-   No se deben interpretar correlaciones a nivel grupal como si fueran aplicables a nivel individual. Robinson, W.S. (1950). "Ecological Correlations and the Behavior of Individuals". American Sociological Review. Robinson → **“Falacia ecológica”**.
+
+-   **Modifiable Analysis Unit Problem o MAUP (Problema de la unidad de área modificable)** - “Los usuarios habituales de correlaciones ecológicas saben que el tamaño del coeficiente depende en gran medida del número de subáreas. …[E]l tamaño de la correlación ecológica ...aumentará numéricamente a medida que se produzca la consolidación de áreas más pequeñas en áreas más grandes...”. (Robinson, págs. 357-8).
+
+# **Definición de la matriz de pesos espaciales**
+
+-   La matriz de pesos espaciales - $W$ -, contiene las ponderaciones para cada unidad geográfica, con base en algún criterio de valoración. El insumo principal para su construcción es **la matriz de distancias**.
+
+-   📏🛣️ **La matriz de distancias** calcula la cercanía entre las unidades espaciales analizadas. La medida de distancia más común es la distancia Euclidiana, pero no es la única.
+
+-   Primera decisión: **Quién es vecino?**
+
+-   Matriz criterio Reina, torre o alfil. Estos términos se explican por sí solos y se refieren a qué tipos de celdas adyacentes elegimos incluir como "vecinas".
+
+<center>![](C:/MauricioQD/git/Spatial-Econometrics-using-R/spatecon_images/imagen6.png){.class width="100%" height="85%"}</center>
+
+-   Usando la matriz reina ♛, para una distancia definida, la matriz $W$ se llena con ceros y unos para cumplir el criterio de cercanía.
+
+-   “Matriz de contigüidad” – un término general que identifica vecinos con 1 y no vecinos con 0.
+
+<center>![](C:/MauricioQD/git/Spatial-Econometrics-using-R/spatecon_images/fig_mat_ones.png){.class width="70%" height="70%"}</center>
+
+-   Luego se debe normalizar a la unidad por cada fila. Es una matriz no-negativa donde la suma por fila es igual a uno.
+
+-   $W$ o “Matriz de ponderaciones”: casi siempre reservaremos este término para referirnos a una matriz de contigüidad estandarizada por filas, con ponderaciones: 0 $\le$ $w_{ij}$ $\le$ 1
+
+<center>![](C:/MauricioQD/git/Spatial-Econometrics-using-R/spatecon_images/fig_mat_w.png){.class width="70%" height="70%"}</center>
+
+-   Por lo tanto, se obtiene una matriz $W$ de dimensiones $N$ x $N$, en este caso $7$ x $7$, que será usada para "rezagar" espacialmente las variables de interés, de acuerdo al tipo de modelación.
+
+<center>![](C:/MauricioQD/git/Spatial-Econometrics-using-R/spatecon_images/fig_mat_wij.png){.class width="70%" height="70%"}</center>
+
+-   Hay muchas variedades de matrices de pesos.
+
+-   Se han generado los elementos $w_{ij}$ basándose en la adyacencia.
+
+-   Hay muchas otras opciones; por ejemplo...
+
+    -   Distancia, distancia inversa, distancia exponencial inversa, o distancia Gaussiana.
+    -   _k_ vecinos más cercanos (_k nearest neighbors - knn_). Selecciona el número total de vecinos que deseas encontrar. Esto se llama _k_. Este método requiere ubicaciones con puntos. También en un buffer de distancias.
+    -   Pesos de Cliff-Ord.
+
+-   $W$ debe basarse en lo posible en la teoría.
+
+-   Muchas opciones en R. Puede editar $W$ en un editor de texto general.
+
+# **Aplicación: distribución espacial de NBI**
+
+```{r librerias, echoes = FALSE, include=TRUE, warning=FALSE, message=FALSE}
+library(tidyverse)
+library(RColorBrewer) 
+library(classInt)
+library(sf) # Lectura de información espacial
+library(spdep) # Lectura de información espacial
+library(spatialreg) # Estimación de modelos e indicadores
+library(kableExtra)
+library(texreg)
+library(knitr)
+```
+
++ Viviendas inadecuadas
+
++ Viviendas con hacinamiento crítico
+
++ Viviendas con servicios inadecuados
+
++ Viviendas con alta dependencia económica
+
++ Viviendas con niños en edad escolar que no asisten a la escuela
+
+## Conjunto de datos y variables independientes
+
+```{r primeros mapas 1, fig.cap="", results='show', warning=FALSE, message=FALSE, echo=TRUE}
+# Cargar marco de datos
+setwd("C:/MauricioQD/git/Spatial-Econometrics-using-R/")
+#getwd()
+dpto.data <- readxl::read_excel("CNPV_2018/Dataset_DPTO_CNPV2018.xlsx")
+
+# Examinar datos
+head(dpto.data)
+```
+
+```{r primeros mapas 2, fig.cap="", results='show', warning=FALSE, message=FALSE, echo=TRUE}
+numeric_cols <- dpto.data[, sapply(dpto.data, is.numeric)]
+numeric_cols <- numeric_cols %>% dplyr::select(-cod)
+
+# Calcula estadísticas para cada columna numérica
+stats <- data.frame(
+  Variable = names(numeric_cols),
+  Min = sapply(numeric_cols, min, na.rm = TRUE),
+  Max = sapply(numeric_cols, max, na.rm = TRUE),
+  Mean = sapply(numeric_cols, mean, na.rm = TRUE),
+  SD = sapply(numeric_cols, sd, na.rm = TRUE),
+  Median = sapply(numeric_cols, median, na.rm = TRUE),
+  Q1 =  sapply(numeric_cols, quantile, na.rm = TRUE, probs = 0.25),
+  Q3 = sapply(numeric_cols, quantile, na.rm = TRUE, probs = 0.75),
+  stringsAsFactors = FALSE
+)
+
+# Recodificar variable
+stats$Variable = factor(stats$Variable,
+                        levels = c("comp_dep_eco", "comp_hacin", "comp_inasist", "comp_servi", "comp_vivi", "ingresos_corrientes", "ingresos_totales", "corr_tot", "n" ,"ocupacion_dpto" ,"tasa_miseria","tasa_nbi"),
+                        labels = c("Dependencia economica",
+                                   "Hacinamiento",
+                                   "Inasistencia escolar",
+                                   "Servicios inadecuados",
+                                   "Viviendas inadecuadas",
+                                   "Ingresos corrientes",
+                                   "Ingresos totales",
+                                   "Razon corr-tot",
+                                   "N", 
+                                   "Ocupacion",
+                                   "Miseria",
+                                   "NBI"))
+
+
+# Presenta las estadísticas en una tabla
+kable(stats, caption = "Resumen descriptivo (n = 33)", digits = 2, row.names = F)
+
+```
+
+## Distribución espacial de NBI
+
+```{r mapa 1, fig.cap="", results='show', warning=FALSE, message=FALSE, echo=TRUE}
+# Datos vectoriales
+dpto_shape <- st_read(dsn = "SpatialData/dptos_col/",
+                      layer = "clean2_dpto_shape")
+
+# Unir las bases de datos
+dpto_merged <-  dpto_shape[c("ID",
+                             "DPTO",
+                             "AREA",
+                             "geometry")] %>%
+  left_join(dpto.data[c("dpto_clean", "dpto", "tasa_nbi",
+                        "tasa_miseria", "comp_vivi",
+                        "comp_servi", "comp_hacin",
+                        "comp_inasist", "comp_dep_eco",
+                        "n", "ingresos_totales",
+                        "ingresos_corrientes", "corr_tot")],
+            by = c("DPTO" = "dpto_clean"))
+
+# Por simplicidad, se omite San Andrés
+dpto_merged <- dpto_merged %>% filter(DPTO != "ARCHIPIELAGO DE SAN ANDRES")
+
+
+# Variable de interés: tasa NBI
+summary(dpto_merged$tasa_nbi)
+min(dpto_merged$tasa_nbi)      
+max(dpto_merged$tasa_nbi)      
+
+# Se presenta el mapa sobre NBI
+colors <- brewer.pal(5, "YlOrBr")  
+color.cat.reg<-classIntervals(dpto_merged$tasa_nbi, n=5, style="quantile", dataPrecision=2)
+colcode <- findColours(color.cat.reg, colors)
+
+```
+
+```{r I Moran 1, fig.cap="", results='show', warning=FALSE, message=FALSE, echo=TRUE}
+# Figura 1
+ggplot(data = dpto_merged) +
+  geom_sf(aes(fill = tasa_nbi), color = "black", size = 0.2) + 
+  scale_fill_gradientn(colors = c("#1a9850", "#fee08b", "#d73027"), 
+                       values = c(0, 0.5, 1), 
+                       name = "Tasa NBI (%)") + 
+  theme_bw() + 
+  labs(title = "Distribucion espacial del NBI por Departamento (% en NBI)",
+       caption = "Fuente: DANE. CNPV-2018.") +
+  theme(axis.text = element_blank(),
+        axis.ticks = element_blank(),
+        panel.grid = element_blank(),
+        legend.position = "right",  
+        legend.background = element_rect(fill = "white", color = "black"))
+
+```
+
+# **Interpretación de los resultados e índices que componen el análisis de modelación espacial**
+
+-   **Medición de la autocorrelación espacial**
+
+    -   Dos clases de pruebas de autocorrelación espacial:
+
+-   **Medidas de autocorrelación espacial global**
+
+    -   Identifica si los datos en su conjunto presentan un patrón espacial
+    -   ¿Existe "agrupación"?
+
+-   Medida más común: estadístico I de Moran (Alfred Pierce Moran (1950)).
+
+-   **Estadísticos de indicadores locales de asociación espacial (Local indicators of spatial association - LISA)**
+
+    -   Identifica qué unidades de observación de nuestro conjunto de datos están significativamente autocorrelacionadas espacialmente con las unidades vecinas.
+
+-   La noción clave es medir que dos propiedades varían juntas. Cuánto importa la proximidad en los datos espaciales.
+
+## **I de Moran global**
+
+-   Estadístico I de Moran está inspirado en la covarianza, por lo tanto, tiene similitud con **el coeficiente de correlación de Pearson. Rango: [-1,1]**. Sin embargo, su interpretación no es igual.
+
+**Coeficiente de correlación de Pearson. Rango: [-1,1]**
+
+$$
+r_{xy}=
+\frac{\sum_{i = 1}^{n}(x_i-\overline{x})(y_i-\overline{y})}{\sqrt{\sum_{i = 1}^{n}(x_i-\overline{x})^2\sum_{i = 1}^{n}(y_i-\overline{y})^2}}
+$$
+
+**I de Moran global**
+
+$$
+I =
+\left(\frac{n}{(\sum_{i = 1}^{n}\sum_{j = 1}^{n}w_{ij})}\right)
+\frac{\sum_{i = 1}^{n}\sum_{j = 1}^{n}w_{ij}(y_i-\overline{y})(y_j-\overline{y})}{\sum_{j = 1}^{n}(y_i-\overline{y})^2}
+$$
+
+-   Donde $w_{ij}$ son los elementos de la matrix de pesos o ponderaciones $W$.
+
+**Autocorrelación espacial y aleatoriedad espacial**
+
+-   Aleatoriedad espacial
+    -   Los valores observados en una ubicación no dependen de los valores observados en ubicaciones vecinas.
+    -   El patrón espacial de valores observado es igual de probable que cualquier otro patrón espacial.
+    -   La ubicación de los valores puede modificarse sin que ello afecte al contenido informativo de los datos.
+
+<center>![](C:/MauricioQD/git/Spatial-Econometrics-using-R/spatecon_images/imagen1.png){.class width="70%" height="70%"}</center>
+
+-   Valor esperado de la I de Moran bajo la hipótesis de ausencia de autocorrelación espacial:
+
+$$E(I)= - 1/(n-1)$$
+
+$$ Var(I) = \frac{n^2S_1-nS_2+3S_0^{2}}{S_0^{2}(n^2-1)}-(E(I))^2$$ - Donde $S_0, S_1, S_2$ son expresiones definidas que dependen de $w_{ij}$.
+
+-   Hipótesis nula: Ausencia de autocorrelación espacial
+
+$$t=\frac{I - E(I)}{\sqrt{Var(I)}}$$
+
+-   Si rechazo la hipótesis nula, entonces se debe modelar la autocorrelación espacial.
+
+-   Un proceso no correlacionado tiene un I esperado = 0
+
+    -   Valores \> 0 indican autocorrelación espacial positiva.
+    -   Valores \< 0 indican autocorrelación espacial negativa.
+
+-   Recuerdan **Modifiable Analysis Unit Problem o MAUP (Problema de unidad de área modificable)**?.
+
+-   Las medidas de autocorrelación espacial dependen de la escala.
+
+<center>![](C:/MauricioQD/git/Spatial-Econometrics-using-R/spatecon_images/imagen10.png){.class width="70%" height="70%"}</center>
+
+**Cuadrantes del diagrama de dispersión de Moran**
+
+-   Cada cuadrante corresponde a 1 de 4 tipos diferentes.
+
+**Ubicaciones de asociación espacial positiva.**
+
+("Soy parecido a mis vecinos")
+
+-   $Q_1$ (valores [+], valores cercanos [+]): **H-H**
+-   $Q_3$ (valores [-], valores cercanos [-]): **L-L**
+
+**Ubicaciones de asociación espacial negativa.**
+
+("Soy diferente a mis vecinos")
+
+-   $Q_2$ (valores [-], valores cercanos [+]): **L-H**
+-   $Q_3$ (valores [+], valores cercanos [-]): **H-L**
+
+<center>![](C:/MauricioQD/git/Spatial-Econometrics-using-R/spatecon_images/imagen12.png){.class width="40%" height="40%"}</center>
+
+### **Ejercicio: Necesidades Básicas Insatisfechas (NBI) 2018**
+
+```{r I Moran, fig.cap="", results='show', warning=FALSE, message=FALSE, echo=TRUE}
+# Datos vectoriales
+dpto_shape <- st_read(dsn = "SpatialData/dptos_col/",
+                      layer = "clean2_dpto_shape")
+
+# Unir las bases de datos
+dpto_merged <-  dpto_shape %>%
+  dplyr::left_join(dpto.data[c("dpto_clean", "dpto", "tasa_nbi",
+                        "tasa_miseria", "comp_vivi",
+                        "comp_servi", "comp_hacin",
+                        "comp_inasist", "comp_dep_eco",
+                        "n", "ingresos_totales",
+                        "ingresos_corrientes", "corr_tot")],
+            by = c("DPTO" = "dpto_clean"))
+
+# Por simplicidad, se omite San Andrés
+dpto_merged <- dpto_merged %>% filter(DPTO != "ARCHIPIELAGO DE SAN ANDRES")
+
+
+# Variable de interés: tasa NBI
+summary(dpto_merged$tasa_nbi)
+min(dpto_merged$tasa_nbi)      
+max(dpto_merged$tasa_nbi)      
+
+# Se presenta el mapa sobre  bg.df$Rate. Seleccionar la paleta
+colors <- brewer.pal(5, "YlOrBr")  
+color.cat.reg<-classIntervals(dpto_merged$tasa_nbi, n=5, style="quantile", dataPrecision=2)
+colcode <- findColours(color.cat.reg, colors)
+
+```
+
+```{r I Moran 2, fig.cap="", results='show', warning=FALSE, message=FALSE, echo=TRUE}
+# Figura 2
+# Visualizar la variable "tasa_nbi" a partir de intervalos
+dpto_merged$tasa_nbi_cat <- cut(dpto_merged$tasa_nbi, 
+                                breaks = c(0, 10, 20, 30, 40, 50, Inf), 
+                                labels = c("0-10%", "10-20%",
+                                           "20-30%", "30-40%", 
+                                           "40-50%", "50%+"),
+                                include.lowest = TRUE)
+
+colors_intervals <- c("0-10%" = "#1a9850",  # Verde
+                      "10-20%" = "#66bd63", # Verde claro
+                      "20-30%" = "#fee08b", # Amarillo-naranja
+                      "30-40%" = "#fdae61", # Naranja
+                      "40-50%" = "#f46d43", # Rojo claro
+                      "50%+" = "#d73027")   # Rojo fuerte
+
+map_nbi <- ggplot(data = dpto_merged) +
+  geom_sf(aes(fill = tasa_nbi_cat), color = "black", size = 0.2) + 
+  scale_fill_manual(values = colors_intervals, name = "Tasa NBI (%)") + 
+  theme_bw() + 
+  labs(title = "Distribucion espacial del NBI por Departamento (en % de NBI)",
+       caption = "Fuente: DANE. CNPV-2018.") +
+  theme(axis.text = element_blank(),
+        axis.ticks = element_blank(),
+        panel.grid = element_blank(),
+        legend.position = "right",  
+        legend.background = element_rect(fill = "white", color = "black"))
+map_nbi
+
+```
+
+```{r I Moran 3, fig.cap="", results='show', warning=FALSE, message=FALSE, echo=TRUE}
+# Revisión de las conexiones o links del shapefile 
+nb_dpto <- poly2nb(dpto_merged)
+nb_dpto
+
+# Se crea la matriz W
+nb2_dpto <- nb2listw(nb_dpto)
+summary(nb2_dpto)
+
+# Véase la información de los pesos de la matriz
+names(attributes(nb2_dpto))  # Nombres de los atributos
+card(nb2_dpto$neighbours)    # Número de vecinos para cada observación
+range(card(nb2_dpto$neighbours))  # Rango (número de vecinos)
+1/rev(range(card(nb2_dpto$neighbours))) # Rango (pesos)
+summary(nb2_dpto, zero.policy=T)   # Resumen
+```
+
+```{r I Moran 4, fig.cap="", results='show', warning=FALSE, message=FALSE, echo=TRUE}
+# I de Moran
+moran.test(dpto_merged$tasa_nbi, 
+           nb2_dpto, alternative="two.sided", zero.policy=T)
+```
+
+## Estadísticos de indicadores locales de asociación espacial (Local indicators of spatial association - **LISA**.
+
+-   Medidas locales
+    -   Valor calculado para cada observación; identificación de "puntos calientes" y "puntos fríos".
+-   El estadístico local de Moran para unidad de área es:
+
+$$
+I_i =
+z_i\sum_{j = 1}^{n}w_{ij}z_j
+$$
+
+-   Donde $z_i$ es una variable estandarizada
+
+$$
+z_i=
+(x_i-\overline{x})/SD_x
+$$
+
+```{r LISA, fig.cap="", results='show', warning=FALSE, message=FALSE, echo=TRUE}
+
+# Moran plot
+# Se presenta el mapa sobre  bg.df$Rate. Seleccionar la paleta
+
+colors <- brewer.pal(5, "YlOrBr")  
+color.cat.reg<-classIntervals(dpto_merged$tasa_nbi, n=5, 
+                              style="quantile", dataPrecision=2)
+colcode <- findColours(color.cat.reg, colors)
+
+## Figura: Distribución espacial del NBI (%)
+par(mfrow=c(1,1))
+plot(dpto_merged[c("tasa_nbi", "geometry")], col=colcode)
+title('Distribucion tasa NBI (%)')
+legend('topleft', legend=c(names(attr(colcode, 'table'))), fill=c(attr(colcode, 'palette')), 
+       title='NBI (%)')
+
+# Moran plot
+dptos_a_etiquetar <- c(
+  "ANTIOQUIA", "BOGOTA, D.C.", "BOYACA",
+  "ATLANTICO", "BOLIVAR", "MAGDALENA",
+  "NORTE DE SANTANDER", "VALLE DEL CAUCA"
+)
+
+moran.plot(dpto_merged$tasa_nbi, nb2_dpto,
+           zero.policy = TRUE,
+           labels = as.character(dpto_merged$DPTO),  
+           xlab = "dpto_merged$tasa_nbi",
+           ylab = "spatially lagged dpto_merged$tasa_nbi",
+           type = "p", col = "#AE017E", cex = 0.8, pch = 1)
+
+x <- dpto_merged$tasa_nbi
+y <- lag.listw(nb2_dpto, x, zero.policy = TRUE)
+labels <- as.character(dpto_merged$DPTO)
+
+idx <- which(labels %in% dptos_a_etiquetar)
+text(x[idx], y[idx], labels = labels[idx], cex = 0.7, pos = 4, col = "black")
+
+```
+
+**Análisis exploratorio de datos espaciales (Exploratory Spatial Data Analysis - ESDA)**
+
+-   El análisis de datos espaciales conduce a la estadística espacial. Tipos de datos espaciales
+
+    -   Datos de eventos (datos de puntos).
+    -   Datos espacialmente continuos (datos geoestadísticos).
+    -   Datos de regionalizados.
+    -   Datos de interacción espacial (datos de flujo).
+    -   Estos tipos de datos no son estrictos, mutuamente exclusivas, categorías.
+
+-   Cartografía y visualización - Histogramas, mapas de valores atípicos, diagramas de caja.
+
+-   Índices de asociación espacial/ autocorrelación espacial.
+
+-   Análisis de patrones puntuales.
+
+-   El objetivo es buscar una buena comprensión y descripción de los datos, sugiriendo así hipótesis para explorar.
+
+-   Busque especialmente pistas sobre la “heterogeneidad espacial” o la “dependencia espacial”.
+
+-   Pocas suposiciones a priori sobre los datos.
+
+-   Nuestro objetivo es modelar y extraer inferencias adecuadas sobre un proceso generador de datos aleatorio y no observado.

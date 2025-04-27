@@ -1,0 +1,682 @@
+---
+title: '**Introducción a la Modelación de Datos Espaciales usando R**'
+author:
+- Presentado por \newline
+- Mauricio Quiñones Domínguez, Ph.D. Política Pública \newline
+- Profesor Dpto. de Economía Universidad Javeriana Cali \newline
+- Elaboración conjunta con \newline
+- Sergio Barona, Coordinador Laboratorio de Economía Aplicada - LEA \newline
+date: "30 de abril"
+output:
+  html_document:
+    toc: yes
+    toc_float:
+      collapsed: yes
+      smooth_scroll: no
+    number_sections: yes
+    theme: spacelab
+    highlight: tango
+  pdf_document:
+    toc: yes
+subtitle: ''
+institute: Universidad Javeriana Cali
+header-includes:
+- \AtBeginEnvironment{CSLReferences}{\tiny}
+- \AtBeginSection{}
+- |
+    <style>
+      ul, li {
+        font-size: 100px !important;
+      }
+    </style>
+---
+<font face="" size = 5>
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+options(repr.plot.width = 16, repr.plot.height = 16)
+```
+
+```{r librerias, echoes = FALSE, include=TRUE, warning=FALSE, message=FALSE}
+library(tidyverse)
+library(RColorBrewer)
+library(classInt)
+library(sf)
+library(spdep)
+library(spatialreg)
+library(kableExtra)
+library(texreg)
+
+```
+
+# **Los modelos más frecuentes para la modelación espacial (Modelos: SAR, SEM y otros)**
+
+## ¿El objetivo es ...?
+
+-   Generalmente deseamos comprender (modelar) los aspectos estructurados de nuestros datos, dejando atrás un vector de ruido aleatorio.
+
+-   Datos = Estructura + Error
+
+-   Datos = Cond. estructura media + estructura $Var/Cov$
+
+-   **Punto de Partida: MODELO MÍNIMOS CUADRADOS ORDINARIOS - MCO**
+
+<center>
+
+![Regresión estándar MCO](C:/MauricioQD/git/Spatial-Econometrics-using-R/spatecon_images/imagen18.png){.class width="100%" height="85%"}
+
+</center>
+
+$$
+y_i = \beta_0 + \beta_1 x_{1i} + \beta_2 x_{2i} + ... + \beta_k x_{ki} + \varepsilon_i
+$$
+
+-   En notación matricial:
+
+$$
+\begin{equation*}
+  \begin{pmatrix}
+    y_1 \\
+    y_2 \\
+    . \\
+    y_n 
+  \end{pmatrix}
+  =
+  \begin{pmatrix}
+    1 + x_{11} + x_{21}+... + x_{k1} \\
+    1 + x_{12} + x_{22}+... + x_{k2} \\
+    ... \\
+    1 + x_{1n} + x_{2n}+... + x_{kn} 
+  \end{pmatrix}
+  \begin{pmatrix}
+    \beta_0 \\
+    \beta_1 \\
+    . \\
+    \beta_k 
+  \end{pmatrix}
+  +
+  \begin{pmatrix}
+    \varepsilon_1 \\
+    \varepsilon_2 \\
+    . \\
+    \varepsilon_n 
+  \end{pmatrix}
+  \end{equation*}
+$$
+
+-   En notación más compacta se escribe como,
+
+$$
+\begin{gather*}
+\boldsymbol{y} = \boldsymbol{X}\boldsymbol{\beta} + \boldsymbol{\varepsilon}
+ \\
+Orden \\
+n \cdot 1= n \cdot (k+1) * (k+1) \cdot 1 + n\cdot1
+\end{gather*}
+$$
+
+**Los supuestos del modelo de regresión**
+
+-   Estas condiciones están plasmadas en el teorema de Gauss-Markov.
+
+**El teorema de Gauss-Markov afirma que** $\beta$ es un “mejor estimador lineal insesgado -  MELI” siempre que se cumplan los supuestos de:
+
+  -   Independencia media: $E[\varepsilon_i|x_i] = 0$ para todo $i$
+  -   Homocedasticidad: $Var[\varepsilon_i|x_i] = \sigma^2$ para todo $i$
+  -   Perturbaciones no correlacionadas: $Cov[\varepsilon_i ,\varepsilon_j ] = 0$ para todo $i \neq j$
+  -   $X$ es no estocástico: $Cov[X’,\varepsilon] = 0$ para todo X
+
+-   Otros que lo complementan:
+
+  -   $y$ normalmente distribuida
+  -   Linealidad
+  -   Sin multicolinealidad
+  -   $\varepsilon_i$ son normales (perturbación normal)
+
+-   Se observa que se incumple el supuesto de errores Independientes e Identicamente Distribuidos - iid - en una especificación de regresión Mínimos Cuadrados Ordinarios (MCO) y la inferencia estadística no es válida.
+
+-   Consecuencias de MCO sin tener en cuenta la estructura espacial,
+
+    -   Los coeficientes MCO de regresión estimados están sesgados e inconsistentes.
+
+    -   Los coeficientes MCO de regresión estimados son ineficientes.
+
+    -   El $R^2$ está sobreestimado.
+
+    -   La inferencia sobre los coeficientes no es correcta.
+
+```{r maps, fig.cap="", results='show', warning=FALSE, message=FALSE, echo=TRUE}
+# Cargar datos
+setwd("C:/MauricioQD/git/Spatial-Econometrics-using-R/")
+mun.data <- readxl::read_excel("CNPV_2018/Dataset_MUN_CNPV2018.xlsx")
+
+# Selección de columnas numéricas
+numeric_cols <- mun.data[, sapply(mun.data, is.numeric)]
+numeric_cols <- numeric_cols %>% dplyr::select(-c("cod_dpto", "cod"))
+
+# Calcula estadísticas para cada columna numérica
+stats <- data.frame(
+  Variable = names(numeric_cols),
+  Min = sapply(numeric_cols, min, na.rm = TRUE),
+  Max = sapply(numeric_cols, max, na.rm = TRUE),
+  Mean = sapply(numeric_cols, mean, na.rm = TRUE),
+  SD = sapply(numeric_cols, sd, na.rm = TRUE),
+  Median = sapply(numeric_cols, median, na.rm = TRUE),
+  Q1 =  sapply(numeric_cols, quantile, na.rm = TRUE, probs = 0.25),
+  Q3 = sapply(numeric_cols, quantile, na.rm = TRUE, probs = 0.75),
+  stringsAsFactors = FALSE
+)
+
+# Recodificar variable
+stats$Variable = factor(stats$Variable,
+                        levels = c("comp_dep_eco", "comp_hacin", "comp_inasist", "comp_servi", "comp_vivi", "ingresos_corrientes", "ingresos_totales", "corr_tot", "n" ,"ocup_rate" ,"tasa_miseria","tasa_nbi", "area_km"),
+                        labels = c("Dependencia economica",
+                                   "Hacinamiento",
+                                   "Inasistencia escolar",
+                                   "Servicios inadecuados",
+                                   "Viviendas inadecuadas",
+                                   "Ingresos corrientes",
+                                   "Ingresos totales",
+                                   "Razon corr-tot",
+                                   "N", 
+                                   "Ocupacion",
+                                   "Miseria",
+                                   "NBI", "Area (km2)"))
+
+
+# Presenta las estadísticas en una tabla
+kable(stats, caption = "Resumen descriptivo", digits = 2, row.names = F)
+
+```
+
+```{r maps2, fig.cap="", results='show', warning=FALSE, message=FALSE, echo=TRUE}
+# Cargar mapa
+# Leer dpto_shape
+setwd("C:/MauricioQD/git/Spatial-Econometrics-using-R/")
+
+# Unir las bases de datos
+mun_shape <- st_read(dsn = "SpatialData\\DANE_geodata\\",
+                      layer = "MGN_ANM_MPIOS") %>% mutate(
+                        cod = as.numeric(
+                          paste0(DPTO_CCDGO, MPIO_CCDGO))
+                      )
+
+# Unir las bases de datos
+mun_merged <-  mun_shape[c("cod",
+                             "geometry")] %>%
+  left_join(mun.data,by = c("cod" = "cod"))
+
+
+# Figura 3:
+library(viridis)
+
+ggplot(data = mun_merged) +
+  geom_sf(aes(fill = tasa_nbi), color = "black", size = 0.2) + 
+  scale_fill_gradientn(colors = c("#1a9850", "#fee08b", "#d73027"), 
+                       values = c(0, 0.5, 1), 
+                       name = "Tasa NBI (%)") + 
+  theme_bw() + 
+  labs(title = "Distribucion espacial del NBI por Municipios (% en NBI)",
+       caption = "Fuente: DANE. CNPV-2018.") +
+  theme(axis.text = element_blank(),
+        axis.ticks = element_blank(),
+        panel.grid = element_blank(),
+        legend.position = "right",  
+        legend.background = element_rect(fill = "white", color = "black"))
+```
+
+```{r maps3, fig.cap="", results='show', warning=FALSE, message=FALSE, echo=TRUE}
+
+# Figura 4:
+mun_merged$tasa_nbi_cat <- cut(mun_merged$tasa_nbi, 
+                                breaks = c(0, 10, 20, 30, 40, 50, Inf), 
+                                labels = c("0-10%", "10-20%",
+                                           "20-30%", "30-40%", 
+                                           "40-50%", "50%+"),
+                                include.lowest = TRUE)
+
+colors_intervals <- c("0-10%" = "#1a9850",  # Verde
+                      "10-20%" = "#66bd63", # Verde claro
+                      "20-30%" = "#fee08b", # Amarillo-naranja
+                      "30-40%" = "#fdae61", # Naranja
+                      "40-50%" = "#f46d43", # Rojo claro
+                      "50%+" = "#d73027")   # Rojo fuerte
+
+map_nbi <- ggplot(data = mun_merged) +
+  geom_sf(aes(fill = tasa_nbi_cat), color = "black", size = 0.2) + 
+  scale_fill_manual(values = colors_intervals, name = "Tasa NBI (%)") + 
+  theme_bw() + 
+  labs(title = "Distribucion espacial del NBI por Municipios (en % de NBI)",
+       caption = "Fuente: DANE. CNPV-2018.") +
+  theme(axis.text = element_blank(),
+        axis.ticks = element_blank(),
+        panel.grid = element_blank(),
+        legend.position = "bottom",  
+        legend.background = element_rect(fill = "white", color = "black"))
+map_nbi
+
+```
+
+```{r maps4, fig.cap="", results='show', warning=FALSE, message=FALSE, echo=TRUE}
+# Revisión de las conexiones o links del shapefile 
+nb_mun <- poly2nb(mun_merged)
+nb_mun
+
+# Eliminar regiones sin enlaces
+mun_merged <- mun_merged[-c(629, 630),]
+
+# Revisión de las conexiones o links del shapefile 
+nb_mun <- poly2nb(mun_merged)
+nb_mun
+
+# Se crea la matriz W
+nb2_mun<- nb2listw(nb_mun)
+summary(nb2_mun)
+
+# Examinar la variable dependiente
+summary(mun_merged$tasa_nbi)
+
+# Véase la información de los pesos de la matriz
+names(attributes(nb2_mun))  # Nombres de los atributos
+card(nb2_mun$neighbours)    # Número de vecinos para cada observación
+range(card(nb2_mun$neighbours))  # Rango (número de vecinos)
+1/rev(range(card(nb2_mun$neighbours))) # Rango (pesos)
+summary(nb2_mun, zero.policy=T)   # Resumen
+
+# - Rechazo o no?
+moran.test(mun_merged$tasa_nbi, 
+           nb2_mun, alternative="two.sided", zero.policy=T)
+```
+
+```{r maps5, fig.cap="", results='show', warning=FALSE, message=FALSE, echo=TRUE}
+
+# Moran plot
+x <- mun_merged$tasa_nbi
+y <- lag.listw(nb2_mun, x, zero.policy = TRUE)
+labels <- as.character(mun_merged$nom_mun)
+
+municipios_seleccionados <- c(
+  labels[order(x)][1:50],                
+  labels[order(x, decreasing = TRUE)][1:25] 
+)
+
+etiquetas <- ifelse(labels %in% municipios_seleccionados, labels, "")
+
+moran.plot(x, nb2_mun,
+           zero.policy = TRUE,
+           labels = etiquetas,
+           xlab = "mun_merged$tasa_nbi",
+           ylab = "spatially lagged mun_merged$tasa_nbi",
+           type = "p", col = "#AE017E", cex = 1, pch = 1)
+
+
+
+```
+
+```{r MCO, fig.cap="", results='show', warning=FALSE, message=FALSE, echo=TRUE}
+
+# Para el análisis, se eliminan los valores faltantes
+mun_merged2 = mun_merged %>% filter(!is.na(corr_tot) &
+                                    !is.na(n) & !is.na(area_km) &
+                                     !is.na(ocup_rate))
+
+# Eliminar regiones sin enlaces
+mun_merged2 <- mun_merged2[-c(202, 205),]
+
+# Logaritmo natural de la tasa
+mun_merged2$log_nbi <- log(mun_merged2$tasa_nbi)
+
+# Se propone una regresión lineal múltiple con las siguientes variables
+reg_mco <- lm(log_nbi ~  n + corr_tot + log(area_km) + ocup_rate, data=mun_merged2)
+summary(reg_mco)
+
+reg_mco_res <- reg_mco$residuals
+
+#---------------------------------#
+# Diagnóstico de los residuales   #
+#---------------------------------#
+
+# A continuación examinamos los residuos
+me1 <- mean(residuals(reg_mco))
+me1    
+sd1 <- sd(residuals(reg_mco))
+sd1    
+summary(residuals(reg_mco))  # Simetría razonable
+
+hist(residuals(reg_mco),  breaks=seq(-2, 4.2, 0.1), col=8, probability=T,
+     ylab='Density', main='Histogram of Residuals(reg_mco)',
+     xlab='Residuals(reg_mco)')
+box()
+curve(dnorm(x, mean=me1, sd=sd1), from=-2, to=4.2, add=T,
+      col='red', lwd=2)
+
+# Hay señales de ouliers. Veamos el QQ-plot
+library(car)
+car::qqPlot(residuals(reg_mco), distribution="norm",
+       xlab='', main='Quantile Comparison Plot reg_mco residuals',
+       envelope=.95, las=0, pch=NA, lwd=2, col="red",
+       line="quartiles")
+
+par(new=TRUE)
+car::qqPlot(residuals(reg_mco), distribution="norm", envelope=FALSE,
+       pch=1, cex=1, col="black")
+par(new=FALSE)
+
+# Nuestra intuición se verifica con numerosas pruebas de normalidad univariada
+library(nortest)
+library(tseries) 
+
+ad.test(residuals(reg_mco))       
+lillie.test(residuals(reg_mco))   
+#pearson.test(residuals(reg_mco))  
+#cvm.test(residuals(reg_mco))      
+#sf.test(residuals(reg_mco))       
+shapiro.test(residuals(reg_mco)) 
+# No hay normalidad en los residuos
+
+# A partir del siguiente gráfico, estudiamos el supuesto de homocedasticidad
+plot(fitted(reg_mco), residuals(reg_mco), xlab="Ajustados y", ylab= "Residuales",
+     main="Plot de Residuales vs. ajustados y")
+abline(h=0)
+
+# Usemos una prueba formal:
+library(lmtest)
+bptest(reg_mco) # Rechaza Ho (Heterocedasticidad)
+```
+
+```{r MCO resid, fig.cap="", results='show', warning=FALSE, message=FALSE, echo=TRUE}
+
+
+#----------------------------------------------#
+# Se verifica si hay independencia de los residuos #
+#----------------------------------------------#
+
+# Se define nuevamente la matriz de pesos
+nb_mun <- poly2nb(mun_merged2)
+nb_mun
+
+# Se crea la matriz W
+nb2_mun<- nb2listw(nb_mun)
+summary(nb2_mun)
+
+# Véase la información de los pesos de la matriz
+#names(attributes(nb2_mun))  # Nombres de los atributos
+#card(nb2_mun$neighbours)    # Número de vecinos para cada observación
+#range(card(nb2_mun$neighbours))  # Rango (número de vecinos)
+#1/rev(range(card(nb2_mun$neighbours))) # Rango (pesos)
+summary(nb2_mun, zero.policy=T)   # Resumen
+
+moran.test(reg_mco$residuals, 
+           nb2_mun, alternative="two.sided", zero.policy=T)
+
+# Seleccionar la paleta
+colors <- brewer.pal(5, "YlOrBr")  
+color.cat.reg<-classIntervals(reg_mco$residuals, n=5, style="quantile", dataPrecision=2)
+colcode <- findColours(color.cat.reg, colors)
+
+## Figura
+par(mfrow = c(1, 1))
+plot(mun_merged2["nom_mun"], 
+     col = colcode, 
+     border = "grey40",  
+     lwd = 0.3)           
+title("Mapa de Residuales de la Regresión")
+legend("topleft",
+       legend = names(attr(colcode, "table")),
+       fill = attr(colcode, "palette"),
+       title = "Residuales de la Regresión")
+
+
+moran.plot(reg_mco$residuals, nb2_mun, zero.policy=T, labels=as.character(mun_merged2$nom_mun),
+           xlab=NULL, ylab=NULL, type="p", col="#AE017E",
+           cex=0.8, pch=1)
+```
+
+## Modelo espacial autorregresivo (SAR) - Spillovers o efectos derramamiento
+
+-   Incorpora dependencia espacial agregando un "rezago espacial" a la variable dependiente en el lado derecho de la ecuación de regresión.
+
+-   Trata la correlación espacial como un proceso o efecto de interés.
+
+    -   Los valores de $y$ en un área están directamente influenciados por los valores de $y$ encontrados en áreas vecinas.
+    -   Depende de cómo definimos el vecindario.
+
+![](C:/MauricioQD/git/Spatial-Econometrics-using-R/spatecon_images/imagen15.png){.class width="30%" height="30%"}
+
+$$
+\boldsymbol{y}= \rho \boldsymbol{Wy} + \boldsymbol{X} \beta + \boldsymbol{\varepsilon} \\
+[\boldsymbol{I} - \boldsymbol{W}\rho]\boldsymbol{y} = \boldsymbol{X} \beta + \boldsymbol{\varepsilon}  \\
+\boldsymbol{y} = [\boldsymbol{I} - \boldsymbol{W}\rho]^{-1}\boldsymbol{X} \beta + [\boldsymbol{I} - \boldsymbol{W}\rho]^{-1}\boldsymbol{\varepsilon}
+$$
+
+-   Efectos marginales son:
+
+$$
+\frac{\partial \boldsymbol{y}}{\partial \boldsymbol{X}} = [\boldsymbol{I} - \boldsymbol{W}\rho]^{-1}\boldsymbol{I}\beta 
+$$
+
+-   Esta expresión se descompone en los efectos directo, indirecto y total. 
+
+$$ 
+\overline{M_{tot}}=n^{-1}i^{'}V(\boldsymbol{W})\beta i \\
+\overline{M_{dir}}=n^{-1}tr(V(\boldsymbol{W}))\beta \\
+\overline{M_{indir}}=\overline{M_{tot}}-\overline{M_{dir}}
+$$
+
+-   Se estima por el método de Máxima Verosimilitud.
+
+```{r SAR, fig.cap="", results='show', warning=FALSE, message=FALSE, echo=TRUE}
+
+model.lag.eig <- spatialreg::lagsarlm(log_nbi ~  n + corr_tot + log(area_km) + ocup_rate,
+                       data=mun_merged2, nb2_mun, method="eigen", quiet=FALSE)
+summary(model.lag.eig)
+
+model.lag.eig.imp <- impacts(model.lag.eig, listw = nb2_mun, R = 999)
+summary(model.lag.eig.imp, zstats = TRUE, short = TRUE)
+
+```
+
+## Modelo de error espacial (SEM) - Heterogeneidad espacial u omisión de variables
+
+-   Examina la autocorrelación espacial entre los residuos de áreas adyacentes.
+
+-   Trata la correlación espacial principalmente como un problema.
+
+    -   Desestima la idea de que la correlación espacial pueda reflejar algún proceso significativo.
+
+-   El error espacial positivo puede reflejar:
+
+    -   Un modelo mal especificado (particularmente una variable omitida que está espacialmente desordenada).
+    -   Unidad espacial de agregación incorrecta.
+
+<center>![](C:/MauricioQD/git/Spatial-Econometrics-using-R/spatecon_images/imagen16.png){.class width="30%" height="30%"}</center>
+
+$$
+\boldsymbol{y}= \boldsymbol{X} \beta + \boldsymbol{u} \\
+$$
+
+$$
+\boldsymbol{u} = \lambda \boldsymbol{Wu} + \boldsymbol{\varepsilon}  \\
+\boldsymbol{u} = [\boldsymbol{I} - \boldsymbol{W}\lambda]^{-1}\boldsymbol{\varepsilon}
+$$
+
+-   Reemplazo en estructural,
+
+$$
+\boldsymbol{y}= \boldsymbol{X} \beta + [\boldsymbol{I} - \boldsymbol{W}\lambda]^{-1}\boldsymbol{\varepsilon} \\
+$$
+
+-   Efectos marginales son:
+
+$$
+\frac{\partial \boldsymbol{y}}{\partial \boldsymbol{X}} = \boldsymbol{I}\beta 
+$$
+
+-   Se estima por el método de Máxima Verosimilitud.
+
+```{r SEM, fig.cap="", results='show', warning=FALSE, message=FALSE, echo=TRUE}
+
+model.err.eig <- spatialreg::errorsarlm(log_nbi ~  n + corr_tot + log(area_km) + ocup_rate,
+                         data=mun_merged2, nb2_mun, method="eigen", quiet=FALSE)
+summary(model.err.eig)
+
+htmlreg(list(reg_mco, model.lag.eig, model.err.eig),
+        file = "OLS_SAR_SEM.html",
+        custom.model.names = c("OLS", "SAR", "SEM"),
+        single.row = TRUE) # El resultado se muestra en otro archivo
+
+```
+
+# **Test de identificación del tipo de modelación espacial**
+
+## Elegir entre modelos: AIC y SC
+
+-   AIC = $-2L + 2k$
+    
+-   SC = $-2L + kln(N)$ (también conocido como BIC)
+
+-   donde L es la log-verosimilitud, k es el número de parámetros del modelo y N es el número de observaciones
+
+## Comentarios técnicos
+
+Pasos para determinar el grado de autocorrelación espacial de los datos y ejecutar una regresión espacial:
+
+1.  Elija un criterio de vecindad ¿Qué zonas están relacionadas?.
+
+2.  Asigne ponderaciones a las zonas que están vinculadas.
+
+3.  Crear una matriz de ponderaciones espaciales.
+
+4.  Ejecutar una prueba estadística para examinar la autocorrelación espacial, I de Moran.
+
+5.  Ejecutar una regresión MCO.
+
+6.  Determinar qué tipo de regresión espacial ejecutar (SAR o SEM u otra).
+
+7.  Ejecutar una regresión espacial.
+
+8.  Seleccionar entre las opciones de modelación.
+
+```{r test LM, fig.cap="", results='show', warning=FALSE, message=FALSE, echo=TRUE}
+
+# Test de multiplicadores de Lagrange (i.e. GeoDa-style Lagrange multiplier tests)
+four_test <- lm.LMtests(reg_mco, nb2_mun, test=c("LMerr", "LMlag", "RLMerr", "RLMlag"))
+summary(four_test)
+```
+
+```{r test LM 2, fig.cap="", results='show', warning=FALSE, message=FALSE, echo=TRUE}
+
+# Veamos la comparación de la autocorrelación en los residuos
+moran.test(reg_mco$residuals, nb2_mun, alternative="two.sided")
+moran.test(model.lag.eig$residuals, nb2_mun, alternative="two.sided")
+moran.test(model.err.eig$residuals, nb2_mun, alternative="two.sided")
+
+# REVISAR CONCLUSIÓN: 
+
+# Veamos la comparación según los criterios de información
+AIC(reg_mco)       # 1358.818
+AIC(model.lag.eig)    # 779.9292
+AIC(model.err.eig)    # 877.2476
+
+BIC(reg_mco)       # 1388.82
+BIC(model.lag.eig)    # 814.9316
+BIC(model.err.eig)    # 912.25
+
+
+```
+
+-   En general, los criterios de selección para elegir un modelo autorregresivo espacial adecuado pueden resumirse en las siguientes reglas de decisión:
+
+    -   Cuando el valor del test LMlag es significativo y el LMerr no lo es, el modelo más apropiado es el autorregresivo espacial (SAR).
+    
+    -   De manera simétrica, cuando el valor del test LMerr es significativo y el LMlag no lo es, el modelo más apropiado es el de autocorrelación en los errores (SEM).
+
+-   Sin embargo, es posible que ambos tests estadísticos sean significativos. En este caso, una regla de decisión puede ser la siguiente:
+
+    -   Cuando el valor del test LMlag es mayor que el del test LMerr, sería más adecuado considerar el modelo autorregresivo espacial (SAR);
+
+    -   Cuando el valor del test LMerr es mayor que el del test LMlag, sería más adecuado considerar el modelo de autocorrelación en los errores (SEM).
+
+
+# **(OPCIONAL) Otros modelos: SLX y SAC**
+
+## Modelo de rezago Espacial de las X's (SLX)
+
+$$
+\boldsymbol{y}= \boldsymbol{X} \beta + \boldsymbol{WX} \theta + \boldsymbol{\varepsilon} \\
+$$
+
+```{r SLX, fig.cap="", results='show', warning=FALSE, message=FALSE, echo=TRUE}
+
+model.slx.eig <- spatialreg::lmSLX(tasa_nbi ~ n + corr_tot + log(area_km) + ocup_rate,
+                         data=mun_merged2, nb2_mun)
+summary(model.slx.eig)
+
+```
+
+## Modelo Espacial Autorregresión combinado (SAC)
+
+$$
+\boldsymbol{y}= \rho \boldsymbol{Wy} + \boldsymbol{X} \beta + \boldsymbol{u} 
+$$
+
+$$
+\boldsymbol{u} = \lambda \boldsymbol{Wu} + \boldsymbol{\varepsilon}  
+$$
+
+```{r SAC, fig.cap="", results='show', warning=FALSE, message=FALSE, echo=TRUE}
+
+model.lag.error <- spatialreg::sacsarlm(tasa_nbi ~  n + corr_tot + log(area_km) + ocup_rate,
+                         data=mun_merged2, nb2_mun, method = "eigen", quiet=TRUE)
+summary(model.lag.error)
+
+model.lag.error.imp <- impacts(model.lag.error, listw = nb2_mun, R = 999)
+summary(model.lag.error.imp, zstats = TRUE, short = TRUE)
+```
+
+```{r test todos, fig.cap="", results='show', warning=FALSE, message=FALSE, echo=TRUE}
+
+# Test de multiplicadores de Lagrange (i.e. GeoDa-style Lagrange multiplier tests)
+lm.LMtests(reg_mco, nb2_mun, test=c("LMerr", "LMlag", "RLMerr", "RLMlag", "SARMA"))
+
+# Veamos la comparación de la autocorrelación en los residuos
+moran.test(reg_mco$residuals, nb2_mun, alternative="two.sided")
+moran.test(model.lag.eig$residuals, nb2_mun, alternative="two.sided")
+moran.test(model.err.eig$residuals, nb2_mun, alternative="two.sided")
+moran.test(model.slx.eig$residuals, nb2_mun, alternative="two.sided")
+moran.test(model.lag.error$residuals, nb2_mun, alternative="two.sided")
+
+# Veamos la comparación según los criterios de información
+AIC(reg_mco)       # 1358.818
+AIC(model.lag.eig)    # 779.9292
+AIC(model.err.eig)    # 877.2476
+AIC(model.slx.eig)    # 8429.426
+AIC(model.lag.error)    # 7957.535
+
+BIC(reg_mco)       # 1388.82
+BIC(model.lag.eig)    # 814.9316
+BIC(model.err.eig)    # 912.25
+BIC(model.slx.eig)    # 8479.429
+BIC(model.lag.error)    # 8479.429
+
+```
+
+**Hay más**
+
+<center>![](C:/MauricioQD/git/Spatial-Econometrics-using-R/spatecon_images/imagen_modelos.png){.class width="60%" height="65%"}</center>
+
+
+Tipo de archivos necesarios:
+
+Archivo Shape, extensión .shp. Contiene la información espacial más los atributos. Significa que formarán parte otros ficheros como shx, .dbf, y .prj. Desarrollado por ESRI
+
+# Referencias
+
+-   Root, E. Class Notes. (2015). Introduction to Spatial Regression Analysis. ICPSR Summer Workshop 2015.
+
+-   Dubé, J. , & Legros, D. (2014). Spatial econometrics using microdata.
+
+-   LeSage, J. P. , & Pace, R. K. (2009). Introduction to spatial econometrics. Boca Raton: CRC Press.
+
+-   Bivand, R. , E.J. Pebesma and V. Gomez-Rubio. (2013). Applied Spatial Data Analysis with R. New York: Springer.
+
